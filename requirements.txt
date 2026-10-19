@@ -12,3 +12,5 @@ geopandas
 shapely
 folium
 jupyterlab
+tabulate
+pytest
