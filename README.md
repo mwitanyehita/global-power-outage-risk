@@ -11,8 +11,8 @@ to a documented data source.
 source plan and remain TBD. Boundaries, weather, outage records and labels are
 acquired for all three pilots; a walk-forward probabilistic model was built
 and **ablated** for South Africa, an honest **no-model** result is recorded for
-Nigeria, and a coverage atlas, live dashboard and final summary complete the
-portfolio layer.
+Nigeria, and a coverage atlas, project dashboard, satellite location-risk
+dashboard and final summary complete the portfolio layer.
 
 > **Headline result:** South African national day-ahead load-shedding is
 > predictable from persistence. Walk-forward Brier **0.0457** vs **0.2338** for
@@ -34,6 +34,7 @@ portfolio layer.
 - [Running the tests](#running-the-tests)
 - [Running the ingestion CLIs](#running-the-ingestion-clis)
 - [Live dashboard](#live-dashboard)
+  - [Location risk dashboard (satellite)](#location-risk-dashboard-satellite)
 - [Notebooks](#notebooks)
 - [Project principles](#project-principles)
 - [30-day plan summary](#30-day-plan-summary)
@@ -84,14 +85,14 @@ Weather is sampled for three cities per country (see
 | 19 | Calibration protocol, evidence and the publishing rule (`reports/day19_calibration.md`); KPLC notice parsing hardened | ✅ committed — publish raw OOF probabilities in-regime, and say so when the regime shifts |
 | 20 | NGA collapse-day baselines — **no model claimed** (`src/experiments/nga_baseline.py`, `reports/day20_nga_baseline.md`) | ✅ committed — 2 positives in the 2025 test window, so no classifier is fit |
 | 21 | ZAF feature ablation: persistence vs weather (`src/experiments/zaf_ablation.py`, `reports/day21_zaf_ablation.md`) | ✅ committed — persistence carries the skill; weather adds none on top |
-| 22 | Live dashboard state layer + app (`src/dashboard/state.py`, `app/dashboard.py`) | ✅ committed — plan status re-derived from the artefacts on disk |
+| 22 | Live dashboard state layer + apps (`src/dashboard/state.py`, `src/dashboard/location.py`, `app/dashboard.py`, `app/outage_risk.py`) | ✅ committed — plan status re-derived from artefacts; satellite location view carries scope and data-cutoff labels |
 | 23–26 | TBD | ⬜ not specified in the source plan |
 | 27 | Model interpretation + portfolio-safe wording (`src/experiments/zaf_interpretation.py`, `reports/day27_model_interpretation.md`) | ✅ committed — coefficient mass ≠ skill; wording-to-avoid table |
 | 28 | TBD | ⬜ not specified in the source plan |
 | 29 | Attribution strings in the README for every used source, guarded by `tests/test_readme_attribution.py` | ✅ strings landed early and are test-enforced; the supported-claims review is part of Day 30 |
 | 30 | Final summary, limitations and reproducibility checklist (`reports/day30_final_summary.md`, `reports/README.md` report index) | ✅ committed |
 
-- **Tests:** `.venv/bin/python -m pytest -q` — **566 passing** on the completed
+- **Tests:** `.venv/bin/python -m pytest -q` — **580 passing** on the completed
   build (verified 2026-10-19). CI (`.github/workflows/tests.yml`) runs the same
   command on every push and pull request. `bash scripts/verify.sh` runs the
   suite **and** regenerates the core derived artefacts and generated reports in
@@ -136,7 +137,7 @@ Weather is sampled for three cities per country (see
 ├── requirements-dev.txt       ← + test/notebook tooling
 ├── pytest.ini                 ← pytest configuration
 ├── .github/workflows/tests.yml← CI: install + pytest on every push/PR
-├── app/                       ← Streamlit dashboard (app/dashboard.py)
+├── app/                       ← Streamlit apps (project pulse + satellite location risk)
 ├── data/
 │   ├── raw/                   ← verbatim downloads, never edited (git-ignored)
 │   ├── external/              ← reference data: boundaries, lookups (git-ignored)
@@ -244,6 +245,11 @@ and `--audit` (where available) validates without writing.
 
 ## Live dashboard
 
+Two Streamlit apps ship with the project: a **project pulse** that shows what
+the build is doing, and a **satellite location-risk dashboard** for visitors
+who want to check a place. The project pulse comes first; the visitor view
+follows.
+
 A read-only Streamlit dashboard shows the project's current state: the plan
 board, files as they land, live re-validation of the downloaded data, the
 pilot-city grid, and the outage label signal.
@@ -256,6 +262,38 @@ It reads the workspace on every refresh (default every 15 s) and never writes
 to it. The **Live grid** tab calls the Open-Meteo forecast API for current
 conditions; those values are **display-only** and must never enter training
 features or labels (leakage rule, Day 18).
+
+### Location risk dashboard (satellite)
+
+A second, visitor-facing dashboard answers the practical question — *"is my
+area at risk?"* — on **satellite imagery** instead of the schematic project
+map:
+
+```bash
+streamlit run app/outage_risk.py
+```
+
+- **Pick a location** by clicking the Esri World Imagery map or searching for
+  a town/city (Open-Meteo geocoding, restricted to the three pilot countries).
+  The point is resolved to country / ADM1 / ADM2 with point-in-polygon against
+  the project's own geoBoundaries files.
+- **South Africa** shows the **national** day-ahead load-shedding probability
+  from the Day 18 model, with its walk-forward Brier skill and calibration ECE.
+  The target is national, so the same value applies everywhere in the country;
+  the panel says so rather than pretending to a province-level forecast.
+- **Kenya** shows the official KPLC **planned** interruption notices that match
+  the selected county/region in the chosen horizon, as a table with dates,
+  local times and affected areas. These are scheduled maintenance, not
+  unplanned-outage labels, and an absent notice is never presented as safe.
+- **Nigeria** states plainly that **no model is claimed**, and shows the dated
+  NERC collapse record plus the reason (two positives in the 2025 test window).
+- Every panel carries its **data cutoff**. The free Eskom mirror ends
+  2026-09-30, so the latest honest day-ahead score is 2026-10-01 — the UI
+  labels that as the most recent scoreable day, not a live forecast.
+- Weather is shown as **display-only context** (Open-Meteo) and is never a
+  model input. Basemap imagery: **Esri World Imagery and World Boundaries and
+  Places** tiles — "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics,
+  and the GIS User Community"; imagery is used for geographic context only.
 
 ## Notebooks
 
@@ -349,6 +387,16 @@ Indicator series downloaded via the World Bank API for KEN/ZAF/NGA with a
 `_manifest.json`; license **CC BY 4.0 per indicator (verify per indicator)**.
 National context only — no locality detail, never a geolocated label
 (inventory §D).
+
+### Dashboard basemap and place search (live services)
+
+| Service | Terms | Attribution string |
+|---|---|---|
+| Esri World Imagery + World Boundaries and Places tiles, <https://server.arcgisonline.com> | Esri tile services; attribution required (**verify before redistribution**) | Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community |
+| Open-Meteo Geocoding and Forecast APIs, <https://open-meteo.com> | Free for non-commercial use — see <https://open-meteo.com/en/terms> | Geocoding and weather by Open-Meteo (https://open-meteo.com) |
+
+Both are requested by the browser/app at view time, are display-only, and are
+never written into training features or labels (Day 18 leakage rule).
 
 ### Planned sources (not yet acquired)
 

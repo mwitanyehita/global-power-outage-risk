@@ -7,6 +7,24 @@ Dates are commit dates (build started 2026-10-19).
 
 ### Added
 
+- `app/outage_risk.py` — visitor-facing satellite location dashboard:
+  click/search a point, resolve it to country/ADM1/ADM2, then show the ZAF
+  national day-ahead probability (with data cutoff and walk-forward
+  evidence), matching KPLC planned-interruption notices for Kenya, or the
+  explicit no-model NERC record for Nigeria. Weather is display-only context.
+- `src/dashboard/location.py` — tested, Streamlit-free logic behind that
+  dashboard: point-in-polygon location resolution with a bbox fallback,
+  KPLC county/region matching with documented aliases, one-step-ahead ZAF
+  serving (withholds the target label), OOF evidence recomputation,
+  Open-Meteo place search/weather, and the Folium satellite map builder.
+- `src/models/factories.py` — shared `logistic_pipeline` / `logistic_model`
+  factories so the Day 18 experiment and the serving dashboard cannot drift
+  into different estimators.
+- `build_forecast_frame()` in `src/datasets/zaf_daily.py` — the first
+  feature-complete day **after** the label cutoff (outer join; missing label
+  lags are never forward-filled), enabling the honest one-day-ahead score.
+- `tests/test_dashboard_location.py` + forecast-frame tests in
+  `tests/test_datasets_zaf.py`; suite now **580 passing**.
 - `docs/project_plan.md` — 30-day roadmap consolidated from every explicit
   day reference in `reports/` and `src/` (unspecified days marked TBD, not
   invented).
@@ -16,6 +34,11 @@ Dates are commit dates (build started 2026-10-19).
 
 ### Changed
 
+- `src/experiments/zaf_daily_model.py` now imports the shared logistic
+  factory instead of defining its own pipeline.
+- `requirements.txt` adds `streamlit-folium==0.27.4` for the satellite map.
+- README documents the location dashboard, its scope/cutoffs and the Esri
+  World Imagery + Open-Meteo attribution.
 - `.gitignore` extended with tooling/OS cache patterns (`.pytest_cache/`,
   coverage, mypy/ruff caches, `.DS_Store`, …).
 

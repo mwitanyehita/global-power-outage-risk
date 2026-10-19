@@ -156,6 +156,9 @@ def cached_boundary_rings(level: str, countries: tuple[str, ...], tolerance: flo
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("### ⚡ GridRisk AI")
 st.sidebar.caption("Live project pulse — read-only view of the workspace.")
+st.sidebar.caption(
+    "Visitor-facing satellite view: `streamlit run app/outage_risk.py`"
+)
 
 refresh_choice = st.sidebar.selectbox(
     "Live refresh", ["Off", "5 s", "15 s", "30 s", "60 s"], index=2,

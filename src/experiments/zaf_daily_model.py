@@ -36,19 +36,17 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
-from src.config import DATA_PROCESSED, REPORTS_DIR, SEED
+from src.config import DATA_PROCESSED, REPORTS_DIR
 from src.datasets.zaf_daily import TIME_COL, build_dataset, feature_columns
 from src.evaluation.probabilistic import (
     brier_score, expected_calibration_error, log_loss, roc_auc,
 )
-from src.models.base import ClimatologyBaseline, SklearnRiskModel
+from src.models.base import ClimatologyBaseline
 from src.models.calibration import ProbabilityCalibrator
 from src.models.cv import expanding_window_splits, walk_forward_oof
+from src.models.factories import logistic_model, logistic_pipeline
 
 MIN_TRAIN = 730      # first two full years train the first fold
 HORIZON = 90         # quarterly test windows
@@ -60,17 +58,9 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def logistic_pipeline() -> Pipeline:
-    """Scaler fitted inside each fold — the L6 guard lives in this object."""
-    return Pipeline([
-        ("scaler", StandardScaler()),
-        ("clf", LogisticRegression(max_iter=2000, random_state=SEED)),
-    ])
-
-
 def model_factories():
     return {
-        "logistic": lambda: SklearnRiskModel(logistic_pipeline()),
+        "logistic": logistic_model,
         "climatology": lambda: ClimatologyBaseline(),
     }
 

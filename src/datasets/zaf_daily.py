@@ -126,22 +126,13 @@ def _calendar_features(frame: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def build_dataset(weather_dir: Path | None = None,
-                  labels_csv: Path | None = None) -> pd.DataFrame:
-    """Inner-join labels and weather on SAST days, add strictly-past features."""
-    weather = zaf_weather_daily(weather_dir)
-    labels = load_labels(labels_csv)
-    if weather.empty:
-        raise FileNotFoundError(
-            "no ZAF weather downloads found — run: python -m src.ingestion.weather")
-    if labels.empty:
-        raise FileNotFoundError(
-            "no ZAF daily labels found — run: python -m src.labels.eskom")
+def _add_features(frame: pd.DataFrame) -> pd.DataFrame:
+    """Attach strictly-past lag/rolling/calendar features to an aligned panel.
 
-    frame = labels.merge(weather, on=TIME_COL, how="inner")
-    frame = sort_by_time(frame, TIME_COL)
-    assert_regular_grid(frame, TIME_COL, freq="1D")
-
+    The input must be a chronological daily panel with the label columns and
+    the three ZAF city weather columns present; the output carries **only**
+    the whitelist below (same-day raw weather is consumed and dropped).
+    """
     city_cols = sorted(
         c for c in frame.columns
         if c.split("_", 1)[0] in {"johannesburg", "cape-town", "durban"}
@@ -170,8 +161,61 @@ def build_dataset(weather_dir: Path | None = None,
     # frame carries zero same-day weather columns (leakage whitelist below).
     keep = [TIME_COL, "hours_active", "mlr_mw_mean", "any_load_shedding",
             "dow", "month", "is_weekend", "doy_sin", "doy_cos"]
-    out = out[keep + lag_cols + label_lag_cols + rolling_cols]
-    return out
+    return out[keep + lag_cols + label_lag_cols + rolling_cols]
+
+
+def build_dataset(weather_dir: Path | None = None,
+                  labels_csv: Path | None = None) -> pd.DataFrame:
+    """Inner-join labels and weather on SAST days, add strictly-past features."""
+    weather = zaf_weather_daily(weather_dir)
+    labels = load_labels(labels_csv)
+    if weather.empty:
+        raise FileNotFoundError(
+            "no ZAF weather downloads found — run: python -m src.ingestion.weather")
+    if labels.empty:
+        raise FileNotFoundError(
+            "no ZAF daily labels found — run: python -m src.labels.eskom")
+
+    frame = labels.merge(weather, on=TIME_COL, how="inner")
+    frame = sort_by_time(frame, TIME_COL)
+    assert_regular_grid(frame, TIME_COL, freq="1D")
+    return _add_features(frame)
+
+
+def build_forecast_frame(weather_dir: Path | None = None,
+                         labels_csv: Path | None = None) -> pd.DataFrame:
+    """Latest feature-complete day in the panel — day-ahead mode.
+
+    The outer join keeps weather days that have no label yet; their label
+    lags stay missing (never forward-filled), so when the weather feed
+    extends past the label cutoff only the first such day has a complete,
+    strictly-past feature row. That row is the latest honest day-ahead
+    prediction the snapshot supports. If the weather feed does not extend
+    past the cutoff, the last labelled day is returned instead.
+
+    Returns a one-row frame (label columns present but unset) or raises when
+    the raw weather and label inputs are absent.
+    """
+    weather = zaf_weather_daily(weather_dir)
+    labels = load_labels(labels_csv)
+    if weather.empty:
+        raise FileNotFoundError(
+            "no ZAF weather downloads found — run: python -m src.ingestion.weather")
+    if labels.empty:
+        raise FileNotFoundError(
+            "no ZAF daily labels found — run: python -m src.labels.eskom")
+
+    frame = labels.merge(weather, on=TIME_COL, how="outer")
+    frame = sort_by_time(frame, TIME_COL).reset_index(drop=True)
+    assert_regular_grid(frame, TIME_COL, freq="1D")
+    out = _add_features(frame)
+    feats = feature_columns(out)
+    complete = out.dropna(subset=feats)
+    if complete.empty:
+        raise ValueError(
+            "no feature-complete day after the label cutoff — the weather "
+            "feed does not extend past the last label day")
+    return complete.tail(1).reset_index(drop=True)
 
 
 def feature_columns(frame: pd.DataFrame) -> list[str]:

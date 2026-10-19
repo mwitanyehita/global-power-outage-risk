@@ -10,11 +10,16 @@ import pytest
 
 from src.datasets import zaf_daily as ds
 from src.datasets.zaf_daily import (
-    TIME_COL, build_dataset, feature_columns, leakage_audit, load_labels,
-    zaf_weather_daily,
+    TIME_COL, build_dataset, build_forecast_frame, feature_columns,
+    leakage_audit, load_labels, zaf_weather_daily,
 )
 
 CITIES = ["johannesburg", "cape-town", "durban"]
+
+
+def _real_ready():
+    from src.ingestion.weather import WEATHER_DIR
+    return (WEATHER_DIR / "ZAF_johannesburg.json").exists() and ds.LABELS_CSV.exists()
 
 
 PERTURB_DAY = "2024-02-20"  # 10 days before the frame end
@@ -66,13 +71,11 @@ def labels_csv(tmp_path):
     return path
 
 
-@pytest.fixture
-def weather_dir(tmp_path):
-    d = tmp_path / "weather"
-    d.mkdir()
+def _write_weather_dir(directory, *, days=60):
+    directory.mkdir()
     import json
     for i, city in enumerate(CITIES):
-        frame = _hourly_weather(city, temp_offset=float(i))
+        frame = _hourly_weather(city, days=days, temp_offset=float(i))
         hourly = {k: frame[k].tolist() for k in frame.columns
                   if k not in ("_city", "time")}
         hourly["time"] = [t.tz_localize(None).isoformat() for t in frame["time"]]
@@ -81,8 +84,20 @@ def weather_dir(tmp_path):
             "hourly_units": {"temperature_2m": "°C"},
             "timezone": "UTC",
         }
-        (d / f"ZAF_{city}.json").write_text(json.dumps(payload))
-    return d
+        (directory / f"ZAF_{city}.json").write_text(json.dumps(payload))
+    return directory
+
+
+@pytest.fixture
+def weather_dir(tmp_path):
+    return _write_weather_dir(tmp_path / "weather")
+
+
+@pytest.fixture
+def extended_weather_dir(tmp_path):
+    # Two weather days beyond the label cutoff let us test the one-day-ahead
+    # forecast frame without fabricating label lags.
+    return _write_weather_dir(tmp_path / "weather_extended", days=62)
 
 
 def _load_raw(weather_dir, city):
@@ -102,6 +117,29 @@ def test_build_dataset_shape_and_grid(weather_dir, labels_csv):
     # labels span 60 SAST days and every one has weather -> full inner join
     assert len(frame) == 60
     assert "any_load_shedding" in frame.columns
+
+
+def test_forecast_frame_returns_first_unlabelled_day(extended_weather_dir,
+                                                     labels_csv):
+    """Only the first day after labels has complete *strictly past* features."""
+    row = build_forecast_frame(weather_dir=extended_weather_dir,
+                               labels_csv=labels_csv)
+    assert len(row) == 1
+    assert row[TIME_COL].iloc[0] == pd.Timestamp(
+        "2024-03-01", tz="Africa/Johannesburg")
+    assert row["any_load_shedding"].isna().all()
+    assert row[feature_columns(row)].notna().all(axis=None)
+
+
+@pytest.mark.skipif(not _real_ready(),
+                    reason="ZAF weather and/or labels not present")
+def test_real_forecast_frame_is_day_after_labels():
+    row = build_forecast_frame()
+    labels = load_labels()
+    assert len(row) == 1
+    assert row[TIME_COL].iloc[0] > labels[TIME_COL].max()
+    assert row["any_load_shedding"].isna().all()
+    assert row[feature_columns(row)].notna().all(axis=None)
 
 
 def test_labels_join_correctly(weather_dir, labels_csv):
@@ -161,11 +199,6 @@ def test_future_weather_perturbation_changes_only_later_rows(weather_dir,
 
 
 # --- real data (skipped when absent) ------------------------------------------
-
-def _real_ready():
-    from src.ingestion.weather import WEATHER_DIR
-    return (WEATHER_DIR / "ZAF_johannesburg.json").exists() and ds.LABELS_CSV.exists()
-
 
 @pytest.mark.skipif(not _real_ready(),
                     reason="ZAF weather and/or labels not present")
