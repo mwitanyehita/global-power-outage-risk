@@ -236,19 +236,27 @@ def write_report(units: gpd.GeoDataFrame | None = None,
         a_counts = am["status"].value_counts().to_dict() if len(am) else {}
         amb = am[am["status"] == "ambiguous"].head(10)
         un = am[am["status"] == "unmatched"].head(10)
+        un_c = cm[cm["status"] != "unique"]
         amb_md = amb.to_markdown(index=False) if len(amb) else "_none_"
         un_md = un.to_markdown(index=False) if len(un) else "_none_"
+        un_c_md = un_c.to_markdown(index=False) if len(un_c) else "_none_"
+        c_matched = int((cm["status"] == "unique").sum()) if len(cm) else 0
+        a_matched = int((am["status"] == "unique").sum()) if len(am) else 0
         kplc_md = (
             f"Events in extract: **{kplc['n_events']}**. "
-            f"County -> ADM1 status counts: `{c_counts}`. "
-            f"Area -> ADM2 candidate status counts: `{a_counts}`.\n\n"
+            f"County -> ADM1 match rate: **{c_matched}/{len(cm)}** "
+            f"(status counts: `{c_counts}`). "
+            f"Area -> ADM2 candidate match rate: {a_matched}/{len(am)} "
+            f"(status counts: `{a_counts}`).\n\n"
+            f"Counties that did NOT resolve uniquely (fix by documented alias "
+            f"map, never fuzzy-force):\n\n{un_c_md}\n\n"
             f"Ambiguous areas (first 10):\n\n{amb_md}\n\n"
             f"Unmatched areas (first 10):\n\n{un_md}\n"
         )
         kplc_findings = (
             f"- KPLC counties resolve against KEN ADM1 with status mix "
             f"`{c_counts}` — unmatched spellings are listed above rather than "
-            f"fuzzy-forced.\n"
+            f"fuzzy-forced; each is a candidate for an explicit alias entry.\n"
             f"- KPLC areas are localities/estates, not admin units: status mix "
             f"`{a_counts}` is expected to be mostly unmatched or ambiguous at "
             f"ADM2; they stay as free-text locality strings unless coordinates "
