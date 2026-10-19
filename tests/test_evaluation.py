@@ -83,6 +83,14 @@ def test_skill_scores_nan_when_reference_is_perfect():
     assert math.isnan(brier_skill_score([0, 1], [0.5, 0.5], [0.0, 1.0]))
 
 
+def test_log_loss_skill_score_nan_when_reference_is_perfect():
+    # log loss is clipped at eps, so a perfect reference scores ~eps rather
+    # than exactly 0: skill against it is undefined, not a huge negative.
+    assert math.isnan(log_loss_skill_score([0, 1], [0.5, 0.5], [0.0, 1.0]))
+    # An imperfect reference keeps a finite (and meaningful) skill score.
+    assert math.isfinite(log_loss_skill_score([0, 1], [0.5, 0.5], [1.0, 1.0]))
+
+
 def test_log_loss_skill_score_reference_value():
     ref = 0.5
     expected = 1.0 - log_loss(Y, P) / log_loss(Y, [ref] * 4)

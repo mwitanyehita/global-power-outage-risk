@@ -106,12 +106,19 @@ def brier_skill_score(y_true, y_prob, reference) -> float:
 
 
 def log_loss_skill_score(y_true, y_prob, reference) -> float:
-    """1 - log loss(model) / log loss(reference); 0 = no skill vs reference."""
+    """1 - log loss(model) / log loss(reference); 0 = no skill vs reference.
+
+    Returns NaN when the reference forecast is (numerically) perfect: skill
+    against a perfect reference is undefined, not a large negative number.
+    ``log_loss`` clips at ``_LOG_LOSS_EPS``, so a perfect reference scores
+    about ``_LOG_LOSS_EPS`` rather than exactly 0 — the comparison therefore
+    uses a tolerance instead of an exact equality test.
+    """
     y, p = _check_binary_arrays(y_true, y_prob)
     ref = _broadcast_reference(reference, len(y))
     score = log_loss(y, p)
     ref_score = log_loss(y, ref)
-    if ref_score == 0.0:
+    if ref_score <= _LOG_LOSS_EPS * 10:
         return float("nan")
     return float(1.0 - score / ref_score)
 

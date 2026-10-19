@@ -200,8 +200,15 @@ def write_provenance(path: Path, meta: Mapping[str, Any], key: Optional[str] = N
 
 
 def sanitize_filename(name: str) -> str:
-    """Keep only alphanumerics, ``-``, ``_``, ``.``; never return empty."""
+    """Keep only alphanumerics, ``-``, ``_``, ``.``; never return empty.
+
+    Path separators and other unsafe characters become ``_``, and leading
+    dots are neutralised so a sanitised name can never be a relative path
+    component (``..``) or a hidden file. Interior dots are preserved so
+    names like ``KEN_ADM0.geojson`` survive.
+    """
     cleaned = "".join(c if (c.isalnum() or c in "-_.") else "_" for c in name)
+    cleaned = cleaned.lstrip(".") or "unnamed"
     return cleaned or "unnamed"
 
 

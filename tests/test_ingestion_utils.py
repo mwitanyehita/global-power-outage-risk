@@ -270,10 +270,18 @@ def test_sha256_helpers(tmp_path: Path):
 
 
 def test_sanitize_filename_strips_separators():
-    assert utils.sanitize_filename("../../etc/passwd") == ".._.._etc_passwd"
-    assert "/" not in utils.sanitize_filename("a/b\\c")
+    assert "/" not in utils.sanitize_filename("../../etc/passwd")
+    assert "\\" not in utils.sanitize_filename("a/b\\c")
+    assert not utils.sanitize_filename("../../etc/passwd").startswith(".")
     assert utils.sanitize_filename("  plain name.txt  ") == "__plain_name.txt__"
     assert utils.sanitize_filename("") == "unnamed"  # never empty
+
+
+def test_sanitize_filename_neutralises_relative_path_components():
+    # A sanitised name must never be ".." or a hidden file.
+    assert utils.sanitize_filename("..") == "unnamed"
+    assert utils.sanitize_filename(".") == "unnamed"
+    assert not utils.sanitize_filename("..secret.json").startswith(".")
 
 
 def test_utc_now_iso_is_utc():
