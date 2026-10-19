@@ -1,16 +1,19 @@
-pandas
-numpy
-requests
-scikit-learn
-scipy
-joblib
-matplotlib
-seaborn
-plotly
-streamlit
-geopandas
-shapely
-folium
-jupyterlab
-tabulate
-pytest
+# GridRisk AI — runtime dependencies.
+#
+# Pinned to the exact versions installed in the project virtualenv
+# (.venv, Python 3.14.4), verified 2026-10-19 via `python -m pip freeze`.
+# Test and notebook tooling lives in requirements-dev.txt.
+pandas==3.0.6
+numpy==2.5.4
+requests==2.34.2
+scikit-learn==1.9.1
+scipy==1.18.1
+joblib==1.6.0
+matplotlib==3.11.2
+seaborn==0.13.2
+plotly==7.1.0
+streamlit==1.66.0
+geopandas==1.2.0
+shapely==2.2.0
+folium==0.20.0
+tabulate==0.10.0

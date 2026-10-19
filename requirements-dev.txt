@@ -1,0 +1,10 @@
+# GridRisk AI — development dependencies (tests + notebooks).
+# Includes everything in requirements.txt.
+#
+#   python -m pip install -r requirements-dev.txt
+#
+# Versions pinned to the project virtualenv (Python 3.14.4), verified
+# 2026-10-19 via `python -m pip freeze`.
+-r requirements.txt
+pytest==9.1.1
+jupyterlab==4.6.4
