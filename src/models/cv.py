@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 
 from src.evaluation.probabilistic import evaluation_report
+from src.features.time_split import assert_strictly_past
 
 __all__ = [
     "ExpandingWindowSplits",
@@ -25,6 +26,20 @@ __all__ = [
     "walk_forward_oof",
     "walk_forward_scores",
 ]
+
+
+def _as_time_values(time_values, *, n_rows: int):
+    """Normalise an optional per-row timestamp series to a DatetimeIndex."""
+    if time_values is None:
+        return None
+    index = pd.DatetimeIndex(pd.Series(time_values))
+    if len(index) != n_rows:
+        raise ValueError(
+            f"time_values has {len(index)} rows but the data has {n_rows}"
+        )
+    if index.tz is None:
+        raise ValueError("time_values must be timezone-aware")
+    return index
 
 
 def _as_index(idx, *, name: str) -> np.ndarray:
@@ -153,7 +168,7 @@ def _take(obj, idx: np.ndarray):
     return np.asarray(obj)[idx]
 
 
-def walk_forward_oof(model_factory, X, y, splits) -> np.ndarray:
+def walk_forward_oof(model_factory, X, y, splits, *, time_values=None) -> np.ndarray:
     """Out-of-fold probabilities for every row a fold actually tested.
 
     For each fold: build a fresh model via ``model_factory()``, fit on the
@@ -162,6 +177,12 @@ def walk_forward_oof(model_factory, X, y, splits) -> np.ndarray:
 
     The factory guarantees no fold inherits state from another (fitting one
     model repeatedly would leak across folds).
+
+    ``time_values`` is optional but recommended: pass the timestamp of each
+    row and every fold is additionally checked to ensure the training
+    timestamps really are earlier than the test timestamps. Positional order
+    alone cannot catch a frame that was not sorted chronologically, which is
+    the most common silent leakage bug in a time series.
     """
     if not callable(model_factory):
         raise ValueError("model_factory must be callable, e.g. lambda: ClimatologyBaseline()")
@@ -170,6 +191,7 @@ def walk_forward_oof(model_factory, X, y, splits) -> np.ndarray:
         raise ValueError(f"y must be 1-D, got ndim={y_arr.ndim}")
     if len(X) != len(y_arr):
         raise ValueError(f"X has {len(X)} rows but y has {len(y_arr)}")
+    times = _as_time_values(time_values, n_rows=len(y_arr))
 
     oof = np.full(len(y_arr), np.nan)
     covered = np.zeros(len(y_arr), dtype=bool)
@@ -191,6 +213,8 @@ def walk_forward_oof(model_factory, X, y, splits) -> np.ndarray:
                 f"fold {fold_no}: train rows are not strictly before test rows "
                 "(not a walk-forward split)"
             )
+        if times is not None:
+            assert_strictly_past(times[train_idx], times[test_idx])
 
         model = model_factory()
         if not hasattr(model, "fit") or not hasattr(model, "predict_proba"):
@@ -219,7 +243,14 @@ def walk_forward_oof(model_factory, X, y, splits) -> np.ndarray:
 
 
 def walk_forward_scores(
-    model_factory, X, y, splits, *, threshold: float = 0.5, reference_rate: float | None = None
+    model_factory,
+    X,
+    y,
+    splits,
+    *,
+    threshold: float = 0.5,
+    reference_rate: float | None = None,
+    time_values=None,
 ) -> pd.DataFrame:
     """Per-fold and pooled probabilistic metrics for walk-forward folds.
 
@@ -230,9 +261,12 @@ def walk_forward_scores(
     Metrics come from ``src.evaluation.probabilistic.evaluation_report``:
     Brier, log loss, skill scores, calibration ECE, ROC AUC and the
     thresholded metrics at ``threshold``.
+
+    ``time_values`` (per-row timestamps) is forwarded to
+    :func:`walk_forward_oof` so every fold is checked for temporal leakage.
     """
     splits = list(splits)
-    oof = walk_forward_oof(model_factory, X, y, splits)
+    oof = walk_forward_oof(model_factory, X, y, splits, time_values=time_values)
     y_arr = np.asarray(y)
 
     rows = []

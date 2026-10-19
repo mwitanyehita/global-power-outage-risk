@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-10-19T14:41:19+00:00",
+  "generated_utc": "2026-10-19T15:15:51+00:00",
   "generator": "python -m src.ingestion.data_manifest",
-  "data_root": "/home/mwita/Data-Portfolio/global-power-outage-risk/data",
-  "file_count": 77,
-  "total_bytes": 259545454,
+  "data_root": "data",
+  "file_count": 193,
+  "total_bytes": 312977466,
   "files": [
     {
       "path": "raw/outages/kenya/kplc_customer_support.html",
@@ -30,15 +30,663 @@
       "provenance": null
     },
     {
+      "path": "raw/outages/kenya/kplc_notice_2024-06-27.pdf",
+      "bytes": 421293,
+      "sha256": "587dbab7d462c65a09dddbf90b6a5eeb6f5a97882f6421f30fd3cf3dc04afb29",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-09-02.pdf",
+      "bytes": 425086,
+      "sha256": "b5e5f9a16067fcdca1dc7e137872e3d2948ce98319518ad4f270dfe6b7802a7a",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-09-05.pdf",
+      "bytes": 659690,
+      "sha256": "fc934a9d7394934910dca19259be107dc74959ef1a8fe0d0b0124b146b6e7183",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-09-11.pdf",
+      "bytes": 305225,
+      "sha256": "a780aaaaf277c9f5cb9441bc31162fad67c788f3767fe5d1effd6848ebb292ea",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-09-13.pdf",
+      "bytes": 279835,
+      "sha256": "baa72ff1801c7a9b7d65bb6db467e7f3ffd3a8cc1f5e347e4e531f070e2b1c08",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-09-19.pdf",
+      "bytes": 364131,
+      "sha256": "cafba4e70e37108f59086a9c8e34cfc43a9284cca93abb711e7ffbfaabee822d",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-09-26.pdf",
+      "bytes": 519204,
+      "sha256": "2a6538edd49ae915f537914adb33b2e0e487172a9113e394ab1d2b5400f49381",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-09-30.pdf",
+      "bytes": 218290,
+      "sha256": "255dfc949d4ef878a3e44989e6a5331c1c108a286579bcd57ab091c3695813ff",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-10-14.pdf",
+      "bytes": 219429,
+      "sha256": "f1ab4be9f418a74f20910dbe65c46103e0949fcf745d4d00abb85d21417f3aae",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-10-17.pdf",
+      "bytes": 175057,
+      "sha256": "9ce88346190c5ef53255fc1a707906edd3bcd8cf1eee650d22cbfacf63c461d8",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-10-25.pdf",
+      "bytes": 125032,
+      "sha256": "2105683a8c59797dec03b9de58e52358723dc2d68c95450af052eeb067ce2a82",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-11-07.pdf",
+      "bytes": 368558,
+      "sha256": "0b5d4cbe71a4accc50c03b158abea36c78c1f90c7bada08e84242755c3ce7363",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-11-14.pdf",
+      "bytes": 185266,
+      "sha256": "cdbd16967dd2db95a328797c3a3679cfb37d423426a414b61a4032f92f35aa87",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-11-22.pdf",
+      "bytes": 283423,
+      "sha256": "ad95d33aaa4565bc76a1861ec4a2ce05c75abfb6c46fc7336c0c4c2aa2c64c53",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-11-27.pdf",
+      "bytes": 213891,
+      "sha256": "cf616f267d3954138067e7314bddcd70488ca20aedcc10e5aa6e5de5eec4c38b",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2024-12-12.pdf",
+      "bytes": 291551,
+      "sha256": "27cdf60ba246056d1f159df7f3a32faecccf40900877ff5496469252f9082c74",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-01-06.pdf",
+      "bytes": 151791,
+      "sha256": "807a4b0a692e7970ffaefac86ed767982da10b2d41477e4ff312cfcca727579c",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-01-09.pdf",
+      "bytes": 297641,
+      "sha256": "d65bce5505b1d1977ccd512abfbd1d53f3f1f8180439446393d4dd8dc263a307",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-01-16.pdf",
+      "bytes": 285422,
+      "sha256": "2fe107b810ffa81d62bbfa6611b195ae98d4931d5aae3dec1753682ab8d9be6e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-01-23.pdf",
+      "bytes": 269166,
+      "sha256": "501e99ce4abf1d77610cb236011a518429691797377fc8b83f3e95f34d6b6fdd",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-01-30.pdf",
+      "bytes": 278053,
+      "sha256": "333f632b33774bae8590ae2253cc7b7e1661b2809ba66e37ef9055dcfa0a14ac",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-02-13.pdf",
+      "bytes": 358934,
+      "sha256": "84116d7868fe6a0c52ce358f3173c26f3661d19138211c8624752b0b9feb5edc",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-02-20.pdf",
+      "bytes": 410353,
+      "sha256": "c66a4361d38ba8256a234fb8ae7a3cfb31b90dddd46406a08d5e0c710a986c28",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-02-27.pdf",
+      "bytes": 406036,
+      "sha256": "6cf1a4756d92fa0030f519ce1a7918008b067b65b89f77d232166a79229113c7",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-03-06.pdf",
+      "bytes": 637056,
+      "sha256": "1ebbe2bb7ca0bd8fdcde8fcbb6bf5ce231d31231515caa37dac242207b536a1d",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-03-13.pdf",
+      "bytes": 599918,
+      "sha256": "9e617153d7660eedf82c9aca2a3a17cd1c1e54443dd5ccd05f498f82e872e118",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-03-17.pdf",
+      "bytes": 88407,
+      "sha256": "b63c720df36720173788032af9553e4c2d031ec824b61c6ce3b4348fdc766a51",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-03-20.pdf",
+      "bytes": 459368,
+      "sha256": "9ccaa12542ad96bbbfccdd6784366272cda68fc4a08d03edc24d1d0469168691",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-03-27.pdf",
+      "bytes": 650573,
+      "sha256": "2670af5f52fce3c90646489a0470e99c55f0db44f04c0cdf76f12bb85b0dae30",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-04-03.pdf",
+      "bytes": 504907,
+      "sha256": "580e8874eb3a18d64865bce4a0db8c57855c4579c3826ee4ddbd2da941870917",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-04-10.pdf",
+      "bytes": 555829,
+      "sha256": "14b880348edbce30d87838dc1d6277e3f35a77d582813c4f8812d84c54a9e4ec",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-04-17.pdf",
+      "bytes": 501979,
+      "sha256": "9afc2edbc70a4261425218081bbbe5af354ce49f391cbab6feb284d738e94356",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-04-24.pdf",
+      "bytes": 439427,
+      "sha256": "159061bf2378d1c8fb7b7441058c2d968cef5e5c1488be89f5bbd86a77acc5c6",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-05-02.pdf",
+      "bytes": 2386430,
+      "sha256": "064b312b8577045221f30cc5399063d5184aa250b3900b9d15fa55b97c3d0a94",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-05-08.pdf",
+      "bytes": 610380,
+      "sha256": "9b06e7bb5baaf67f17d96cf8f62dc2b708bf5f3bcc142fce8ee4a678fb059edf",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-05-15.pdf",
+      "bytes": 616430,
+      "sha256": "8d97e08483af358620b919312dfcadc20225f93c233f1e9c62ffe1d3332900b8",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-05-23.pdf",
+      "bytes": 603484,
+      "sha256": "c8ed21d946b103873111b26874b02fa63584c533862a48d3b9c525044d0b8c43",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-05-29.pdf",
+      "bytes": 589417,
+      "sha256": "f82783965e700f1ea1b4d310cabd5b5f0f7cdc00a67383d7143dff9187ccce8d",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-06-13.pdf",
+      "bytes": 351531,
+      "sha256": "84db9303076c25df85af156d4a2791795dbb5ca5e5f34ae78cf48593cd1d38fd",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-06-18.pdf",
+      "bytes": 510339,
+      "sha256": "03bdb4b4a0ee0d475f387cb0c677d973025f799dca4e459cc205bd56c5d93725",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-06-26.pdf",
+      "bytes": 691943,
+      "sha256": "baa630e07631fb06f4ae809c109185a8591c7296ce0385a4eb61d349d23628b8",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-07-03.pdf",
+      "bytes": 580252,
+      "sha256": "5a09ecb1f9dd8dbb038573fea101f0097132a3a74557fc321aa093fa0c51fbd6",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-07-10.pdf",
+      "bytes": 691388,
+      "sha256": "ae8bb1adc4d4646798f411c5b5da4dddbb38bef76b8b9c9b8d33a37e3cd62e0b",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-07-12.pdf",
+      "bytes": 160382,
+      "sha256": "5309f5b88240a4a8495049e4ce37f6d2213b9ad266bb561e3394538bd3b189f6",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-07-21.pdf",
+      "bytes": 681695,
+      "sha256": "6280f1ee4034d821534654858d841889c9592626f85d5823ee1c6e1bef388a8e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-07-24.pdf",
+      "bytes": 3979208,
+      "sha256": "d683008acd9f640bba399d22a8154167032808cab33a0cda411446c264fc8f46",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-07-31.pdf",
+      "bytes": 638280,
+      "sha256": "dfa30e21e5c0af50b8e2799229dbc4d6952828dfad8b9e9977e756a0783cb8e5",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-08-08.pdf",
+      "bytes": 703097,
+      "sha256": "70aa74b39af109cc4d26a27af76e588758cb7f0cd80c3f97b62f7984ab688e0e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-08-14.pdf",
+      "bytes": 631841,
+      "sha256": "83e77ad25a5bfcc2547edd5afc0fb74757e5fe29ebd85a1ddffb0ce41ef58e89",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-08-20.pdf",
+      "bytes": 484466,
+      "sha256": "a98873ae96fb92655ef1ab0a99ff8c246ace2ed979c97ff98db9981bc3aa033c",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-08-28.pdf",
+      "bytes": 426999,
+      "sha256": "02a2bc9c96a73bf5ffee3f77d27ffe870f767261c78789b33b66868434cab84d",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-09-04.pdf",
+      "bytes": 709408,
+      "sha256": "cae3b29b9fcd0e8fe5b7b834a0f472c34bc4542e64f18f894324fd21ba9a353c",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-09-11.pdf",
+      "bytes": 561219,
+      "sha256": "9b94c5ec16e811a75b25ff188d47bd0c9dd916ad33ef10339f9fdcf891dbf071",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-09-19.pdf",
+      "bytes": 730490,
+      "sha256": "fa3dc33a9de8e3e42a157a8144f8e5502ef6bb154f8a87605fc415d2b01170ed",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-09-26.pdf",
+      "bytes": 676202,
+      "sha256": "a08905c73045c0105f41a41f7280a8df8aa578404814a74f55551d20e4bdabd1",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-10-02.pdf",
+      "bytes": 626868,
+      "sha256": "116fc145bf20f07db5a11538018815e835d56b174823a2075d7a860802cd99b7",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-10-08.pdf",
+      "bytes": 144568,
+      "sha256": "6138e1313fdd148fa43ca2124d2c751749de9f799651f7bc0ab0653ecc27ad5a",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-10-10.pdf",
+      "bytes": 820667,
+      "sha256": "c7ccbf60901f42a5f73876a1e369812714de5ead71ef24440704a5ed85067bf2",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-10-22.pdf",
+      "bytes": 643436,
+      "sha256": "d77e7e3e8d74cacabae271b4d8c3d73980198a5df6628ab7ee76daf83448f15f",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-10-22_0810.pdf",
+      "bytes": 820667,
+      "sha256": "c7ccbf60901f42a5f73876a1e369812714de5ead71ef24440704a5ed85067bf2",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-10-25.pdf",
+      "bytes": 438732,
+      "sha256": "54c9b660e0f7d7c062cdad0ea2203c8fd7847c279f62ff8f4454a7e01717fcc5",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-10-30.pdf",
+      "bytes": 464072,
+      "sha256": "697819ac830ff347a2230df9b8291acb4cd9d1adade3d613370d318e2c527d99",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-11-06.pdf",
+      "bytes": 458869,
+      "sha256": "734878f23770c70068fe07f75c973c7d76d4d2abaa02e58abd6b39327c7794db",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-11-13.pdf",
+      "bytes": 433001,
+      "sha256": "dc129530e9f2a1352328d649b7a91db519da56307e55d7edc38ba9e855aa5959",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-11-20.pdf",
+      "bytes": 621777,
+      "sha256": "d61b936ae658c78e98432e08e8cfa8032352f9c3850902d914ceb97f519ed6d9",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-12-04.pdf",
+      "bytes": 595328,
+      "sha256": "3258d76368b47646f2d5084d089e0ac46273d755c8d9b75f0eb97f42681a3b46",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-12-12.pdf",
+      "bytes": 392685,
+      "sha256": "9f15a2f2cd28e13b40c383a98504be48463fc3ae6ea737db87632ea3f90a163e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-12-18.pdf",
+      "bytes": 278060,
+      "sha256": "c2c62cf766e15ed7da0a478f6fd7a1410823ee691c7ba057624d93b00515c5fc",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-12-24.pdf",
+      "bytes": 202345,
+      "sha256": "0068edfcf44846ec128a33218258fbb4e482512456a5de3a15558eba3b8f0571",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2025-12-31.pdf",
+      "bytes": 220470,
+      "sha256": "d81106758d1afbb2f6f78463b855502067aebc9a7998ebb7284604ff71ef54b5",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-01-08.pdf",
+      "bytes": 259338,
+      "sha256": "4cddcc95915759c4063ee3451f109ad4042dcf04751c775eeef70659b2761dfe",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-01-15.pdf",
+      "bytes": 318249,
+      "sha256": "8e433922faa339976fea3b53b5839cdaae5e49b5aa3ee9aa5352f6e3a0d57d7e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-01-22.pdf",
+      "bytes": 399969,
+      "sha256": "ee9954a3db56ffbc6c658b1eaf2e01570f8ecffbdf2d23e18ac6749af620656e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-01-29.pdf",
+      "bytes": 356983,
+      "sha256": "90ddda9cb40f57cdf521bd0949c76ff956aed0e8770ffd461908bfb16380f730",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-02-05.pdf",
+      "bytes": 447803,
+      "sha256": "c6c8015f8c6c31f4ada54cc587ce19c5d80bbfecb6f9d28b9ab60241f2be6bb9",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-02-12.pdf",
+      "bytes": 431303,
+      "sha256": "538c92caed670a09639237ae6757cb70500f03471624e7848da4af8926fde862",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-03-05.pdf",
+      "bytes": 348564,
+      "sha256": "3803d0c742bb4780d03848fb1df74666c689a4cf54906dbbd25a355870c81c36",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-03-06.pdf",
+      "bytes": 348564,
+      "sha256": "3803d0c742bb4780d03848fb1df74666c689a4cf54906dbbd25a355870c81c36",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-03-12.pdf",
+      "bytes": 365098,
+      "sha256": "2b5047eb81cb5f9625ca77650e266f577bc2e7f07c714179fa96dc020a789c4b",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-03-19.pdf",
+      "bytes": 419567,
+      "sha256": "e5bb04442652f5a9946b9a6fea5efab000525ba4122cc7cef1dc9240737cab8a",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-03-26.pdf",
+      "bytes": 376042,
+      "sha256": "e2ce80294d7a23d8614d2ef45402765dff2a5a98eef4689036a634f933e18ee2",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-04-02.pdf",
+      "bytes": 389040,
+      "sha256": "f4376942f0ff76a8fd7b454700e857260b8af332c6d1fc4087e1af1e43633d91",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-04-10.pdf",
+      "bytes": 284607,
+      "sha256": "9952edc095afe6a6e2db0501c604a37e78bc9928bcfe8cdc34aed43cd04763ce",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-04-16.pdf",
+      "bytes": 378416,
+      "sha256": "c91da0b1d92532a16cae461c08e019ed5d3ef9777a2df2708492006f9e390734",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-04-23.pdf",
+      "bytes": 428151,
+      "sha256": "a0007567562295dd58e56e1cd45041d0da82adf857430fa7f3b0316f887188e9",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-05-04.pdf",
+      "bytes": 332624,
+      "sha256": "856085b51cd89b2c78986c4fdb9c12416a7d48d40c9fc2d2ca4d93b91b732175",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-05-14.pdf",
+      "bytes": 407242,
+      "sha256": "bb214b28751278101726478b9dd671e61ef15bbd58560e23102aa2fe68c2ca32",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-05-14_1529.pdf",
+      "bytes": 407242,
+      "sha256": "bb214b28751278101726478b9dd671e61ef15bbd58560e23102aa2fe68c2ca32",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-05-21.pdf",
+      "bytes": 352292,
+      "sha256": "336675324d83541879b5736989f871fd9ed1023e6b1054100903636b0547fe31",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-05-28.pdf",
+      "bytes": 368984,
+      "sha256": "a9977b0536b79ca98476eb52f1f999082104570c29c17da9d3ce4f47fc5d495a",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-06-05.pdf",
+      "bytes": 193566,
+      "sha256": "b3d4dbcd3d420b4e4e3e3dfa1be6706d3fbc4313d44f8b91dc44b63b7cd6a13b",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-06-11.pdf",
+      "bytes": 308905,
+      "sha256": "04a89250b798290eb3204de6f4407bd6c91d3e40a133d3c6fee494ba48b6e606",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-06-18.pdf",
+      "bytes": 392211,
+      "sha256": "59ada1b291aeedddddabe333252193f904317c51b33a1c1bf86aa2ef7f032a3a",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-06-24.pdf",
+      "bytes": 400567,
+      "sha256": "be0052841ef6afa4839d25c78d92a3ac75b95d460749acb17b4cfb1326d5aca6",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-07-02.pdf",
+      "bytes": 304114,
+      "sha256": "54bbf3a4b4e84a5e47b966f6968b032ce0f6a851e5b646fe6e4ac1a8ee21262e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-07-09.pdf",
+      "bytes": 400342,
+      "sha256": "e48386a0dbadc4ff70375ca70213933b282e21398c9fff93d30f32bb31a975f1",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-07-24.pdf",
+      "bytes": 304277,
+      "sha256": "a604c083bd4b6e0959e6f5bb8762acd1cbf305ac3a7a714e0af844513509a67a",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-07-30.pdf",
+      "bytes": 377047,
+      "sha256": "c75b48515500490972cf8df0eaaf05d504f22c93f4b70208bb1bb7e62761dfbe",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-08-14.pdf",
+      "bytes": 349391,
+      "sha256": "068d1bc04fd9cfacd25986805e8943afd21f344a4edc727e018e66d7eac9b306",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-08-20.pdf",
+      "bytes": 408789,
+      "sha256": "d23f695916f942e2cc498ce98aa3b2783d5d34b802b4b400043877eea5ec3f21",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-08-26.pdf",
+      "bytes": 393770,
+      "sha256": "f280008f7a69008f37a6ebcce865a5ee1f62576778c2c8327ab828510da7228f",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-09-03.pdf",
+      "bytes": 388502,
+      "sha256": "bb21ccdfb772e5aa5b6eeb8ff16e8eaa978256bc94cfaac3a923408493bc7078",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-09-10.pdf",
+      "bytes": 412141,
+      "sha256": "45e5669e31218a3c37c3c1cfc0d6a4aaee2f068f36f65e36831110a0ff4df643",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-09-17.pdf",
+      "bytes": 409189,
+      "sha256": "00a332c38f70159f4bd8e0a1865751ea0fd5c8e4ea85c74cab8b3097ed5580d7",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-09-17_1656.pdf",
+      "bytes": 409189,
+      "sha256": "00a332c38f70159f4bd8e0a1865751ea0fd5c8e4ea85c74cab8b3097ed5580d7",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-09-25.pdf",
+      "bytes": 358971,
+      "sha256": "0a669c75c87f297cde7afde4bf1dd32a9af0c885bc3ffef86a1bc3096228991b",
+      "provenance": null
+    },
+    {
       "path": "raw/outages/kenya/kplc_notice_2026-10-01.pdf",
       "bytes": 363214,
       "sha256": "dd79efd7e926ba3c14889370732b65b5a4e80b0c14002ec3dac4aa41b2944573",
       "provenance": null
     },
     {
+      "path": "raw/outages/kenya/kplc_notice_2026-10-07.pdf",
+      "bytes": 225066,
+      "sha256": "9bf912c8ba03e3be63631540cfe73d8932253c401cd447efbd77db943e2dce68",
+      "provenance": null
+    },
+    {
       "path": "raw/outages/kenya/kplc_notice_2026-10-16.pdf",
       "bytes": 114635,
       "sha256": "dd6068ff0f4661e0469532a3ef80a8e4bf166990e1d84310aa7de71dd77a1c54",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-10-16_1220.pdf",
+      "bytes": 271893,
+      "sha256": "5da6f7f9ed23665237650f1651702ee87baaf3eaeb4edde31519931981b25b4f",
       "provenance": null
     },
     {
@@ -117,6 +765,12 @@
       "path": "raw/outages/kenya/livewire_response_csrf_updates_searchsite.txt",
       "bytes": 56989,
       "sha256": "559d20e3580dc3df777ee967a0fbe172552bca10ed28cf56c1019a0e8e4bce6e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/pdfs_manifest.json",
+      "bytes": 115,
+      "sha256": "bbdc1ce9c45013f3ab9767c6d26f9ab44a088c7ab05421876deb025830d3ec87",
       "provenance": null
     },
     {
@@ -760,6 +1414,24 @@
       }
     },
     {
+      "path": "processed/kplc_planned_outages.csv",
+      "bytes": 1183370,
+      "sha256": "b4561a89f2f2b729aff85be5a378687624d316b048c0a2e78430aa6c132cf8c1",
+      "provenance": null
+    },
+    {
+      "path": "processed/nga_collapse_events.csv",
+      "bytes": 1599,
+      "sha256": "38334817917cfa3e82ad6ba2ac69d7f065cfafd4fc67cb56957f6cbefefdc15c",
+      "provenance": null
+    },
+    {
+      "path": "processed/nga_daily_collapse.csv",
+      "bytes": 26425,
+      "sha256": "1143d729bdcf049a41b90639dd7e6b8c5a14b9fe7a8d9efe92594128b3efa9e4",
+      "provenance": null
+    },
+    {
       "path": "processed/unit_registry.csv",
       "bytes": 127865,
       "sha256": "b9a0884697b88fbf932ac8c058558f82ba670564fed146c7c1837494025d670e",
@@ -881,6 +1553,30 @@
           }
         }
       }
+    },
+    {
+      "path": "processed/zaf_annual_validation.csv",
+      "bytes": 438,
+      "sha256": "17d6912a4eb95309c3346e2312a3bd715cfd5afe768d710d5f38b7a4e60a4103",
+      "provenance": null
+    },
+    {
+      "path": "processed/zaf_daily_dataset.csv.gz",
+      "bytes": 710481,
+      "sha256": "2a496f5304994e0672b3525b1ac1d6756fa30fb97129abe0d5dc66909d2e9299",
+      "provenance": null
+    },
+    {
+      "path": "processed/zaf_daily_loadshedding.csv",
+      "bytes": 144463,
+      "sha256": "17be65416f54448434c78994f9bdcae2b5322ea2b88f1850ec9b645b321df1fe",
+      "provenance": null
+    },
+    {
+      "path": "processed/zaf_eskom_hourly_labels.csv.gz",
+      "bytes": 510866,
+      "sha256": "7aeecdd74e475704f885509cccd8b3f17ec809da3f9b44e98c6f94232b745e4d",
+      "provenance": null
     },
     {
       "path": "external/boundaries/KEN_ADM0.geojson",

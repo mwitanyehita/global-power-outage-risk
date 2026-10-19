@@ -6,6 +6,12 @@ README and `manifest.json` live at the `data/` root and are the two tracked
 files here. Source licences and citation requirements are registered in
 `reports/data_inventory.md`.
 
+> `manifest.json` is a **reproducibility snapshot**: it records the SHA-256 of
+> every dataset file, so anyone who re-downloads the same sources can verify
+> they got identical bytes. It is regenerated on every ingestion run and so
+> shows a diff (`generated_utc` plus new/changed hashes) each time — read that
+> diff before committing, and do not hand-edit it.
+
 ## Layout
 
 ```

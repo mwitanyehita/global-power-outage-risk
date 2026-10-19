@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from src.config import DATA_RAW
+from src.config import DATA_RAW, PROJECT_ROOT
 from src.ingestion import utils
 
 DEFAULT_OUT = DATA_RAW.parent / "manifest.json"
@@ -96,13 +96,26 @@ def build_manifest(data_root: Path, out_path: Path | None = None) -> dict[str, A
     manifest = {
         "generated_utc": utils.utc_now_iso(),
         "generator": "python -m src.ingestion.data_manifest",
-        "data_root": str(data_root),
+        # Stored relative to the project root so the manifest stays portable
+        # between machines (an absolute path makes every checkout's manifest
+        # differ and breaks byte-for-byte reproducibility of the artifact).
+        "data_root": _portable_root(data_root),
         "file_count": len(datasets),
         "total_bytes": int(sum(d["bytes"] for d in datasets)),
         "files": datasets,
     }
     utils.write_json(out_path, manifest)
     return manifest
+
+
+def _portable_root(data_root: Path) -> str:
+    """Return a project-relative, POSIX-style path for ``data_root``."""
+    data_root = Path(data_root).resolve()
+    try:
+        relative = data_root.relative_to(PROJECT_ROOT.resolve())
+    except ValueError:
+        return data_root.as_posix()
+    return relative.as_posix()
 
 
 def main(argv: list[str] | None = None) -> int:

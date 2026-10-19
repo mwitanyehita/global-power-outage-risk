@@ -308,3 +308,61 @@ def test_walk_forward_scores_single_class_fold_reports_nan_auc():
 
 def math_isnan(value) -> bool:
     return value != value
+
+
+# -- timestamp-aware leakage guard ---------------------------------------------
+
+
+def _utc_times(n_rows: int):
+    import pandas as pd
+
+    return pd.date_range("2024-01-01", periods=n_rows, freq="h", tz="UTC")
+
+
+def test_walk_forward_oof_accepts_matching_time_values():
+    X = np.arange(10, dtype=float).reshape(-1, 1)
+    y = (np.arange(10) % 2).astype(int)
+    oof = walk_forward_oof(
+        lambda: ClimatologyBaseline(), X, y, _splits(), time_values=_utc_times(10)
+    )
+    assert np.isfinite(oof).sum() > 0
+
+
+def test_walk_forward_oof_rejects_out_of_order_timestamps():
+    """Positional order alone must not hide a non-chronological frame."""
+    X = np.arange(10, dtype=float).reshape(-1, 1)
+    y = (np.arange(10) % 2).astype(int)
+    times = _utc_times(10)[::-1]  # newest first: positionally "sorted" but wrong
+    with pytest.raises(ValueError, match="leakage"):
+        walk_forward_oof(
+            lambda: ClimatologyBaseline(), X, y, _splits(), time_values=times
+        )
+
+
+def test_walk_forward_oof_rejects_naive_timestamps():
+    X = np.arange(10, dtype=float).reshape(-1, 1)
+    y = (np.arange(10) % 2).astype(int)
+    naive = _utc_times(10).tz_localize(None)
+    with pytest.raises(ValueError, match="timezone-aware"):
+        walk_forward_oof(
+            lambda: ClimatologyBaseline(), X, y, _splits(), time_values=naive
+        )
+
+
+def test_walk_forward_oof_rejects_mismatched_time_length():
+    X = np.arange(10, dtype=float).reshape(-1, 1)
+    y = (np.arange(10) % 2).astype(int)
+    with pytest.raises(ValueError, match="time_values"):
+        walk_forward_oof(
+            lambda: ClimatologyBaseline(), X, y, _splits(), time_values=_utc_times(5)
+        )
+
+
+def test_walk_forward_scores_forwards_time_guard():
+    X = np.arange(10, dtype=float).reshape(-1, 1)
+    y = (np.arange(10) % 2).astype(int)
+    with pytest.raises(ValueError, match="leakage"):
+        walk_forward_scores(
+            lambda: ClimatologyBaseline(), X, y, _splits(),
+            time_values=_utc_times(10)[::-1],
+        )
