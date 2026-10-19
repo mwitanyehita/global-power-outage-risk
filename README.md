@@ -2,13 +2,13 @@
 
 Probabilistic power-outage risk intelligence for **Kenya, Nigeria, and South
 Africa**, built from verified outage records, weather data, official notices,
- and administrative geography. The goal is honest, well-calibrated risk
+and administrative geography. The goal is honest, well-calibrated risk
 forecasts — not hype: every number published by this project must be traceable
 to a documented data source.
 
-**Status:** Day 3 of a planned 29-day build · test suite green ·
-administrative boundaries and historical weather for all three pilot countries
-ingested and audited.
+**Status:** Day 4 of a planned 29-day build committed (Day 5 in flight) ·
+administrative boundaries and historical weather for all three pilot
+countries ingested and audited.
 
 ---
 
@@ -53,20 +53,24 @@ Weather is sampled for three cities per country (see
 | 1 | Colab + local environment check (`notebooks/00_colab_setup.ipynb`), project data inventory (`reports/data_inventory.md`) | ✅ committed |
 | 2 | Administrative boundaries downloaded from geoBoundaries gbOpen and audited (`notebooks/01_admin_boundaries.ipynb`, `src/ingestion/boundaries.py`, `reports/day02_boundaries_audit.md`) | ✅ committed — 9/9 files pass every check |
 | 3 | Historical weather for the nine pilot cities (`notebooks/02_historical_weather.ipynb`, `src/ingestion/weather.py`, `reports/day03_weather_audit.md`) | ✅ committed — all 9 cities pass timestamp/alignment checks |
+| 4 | Outage-record source investigation for all three pilots (`reports/day04_outage_sources.md`), outage intake module (`src/ingestion/outages.py`) | ✅ committed |
 
-- **Tests:** `.venv/bin/python -m pytest -q` — suite is green on every commit
-  (34 tests after Day 3; run locally for the current count as later days add
-  coverage). CI runs the same command on every push.
+- **Tests:** `.venv/bin/python -m pytest -q` — 34 tests green at the Day 3
+  commit; later days land in parallel, so treat the latest local run / CI
+  result as the current count and state.
 - **Audit highlights:** all 9 boundary files are EPSG:4326 with zero
   null/empty/invalid geometries and unit counts matching both API metadata and
   expectations; one known issue — 5 duplicate unit names in `NGA_ADM2.geojson`,
   resolved on Day 11 by point-in-polygon matching instead of name matching.
   Weather: 50 808 hourly rows per city (2021-01-01 → 2026-10-18 UTC), zero
   gaps, zero duplicates, identical UTC grid across all nine cities.
-- **Not built yet:** features, outage labels, models, or evaluation
-  (`src/features/`, `src/models/`, `src/evaluation/` are placeholders by
-  design). Day 4+ work — outage records, feature build, dashboard — is in
-  flight; see [`docs/project_plan.md`](docs/project_plan.md).
+- **Label reality check (Day 4):** South Africa has a dense national hourly
+  record (Eskom MLR, 2017-04 → 2026-09), Nigeria a sparse national event
+  record (grid collapses), Kenya planned-interruption notices only —
+  model scope is capped accordingly (see `reports/day04_outage_sources.md`).
+- **Not built yet:** labels, models, and evaluation. `src/features/` and
+  `src/evaluation/` are in flight; `src/models/` is still a placeholder —
+  see [`docs/project_plan.md`](docs/project_plan.md).
 
 ## Repository layout
 
@@ -83,15 +87,15 @@ Weather is sampled for three cities per country (see
 │   ├── external/              ← reference data: boundaries, lookups (git-ignored)
 │   └── processed/             ← cleaned/derived tables (git-ignored)
 ├── docs/                      ← project plan & data governance notes
-├── notebooks/                 ← Colab-compatible walkthroughs (Day 1, 2, …)
+├── notebooks/                 ← Colab-compatible walkthroughs (Day 1, 2, 3, …)
 ├── reports/                   ← data inventory, daily audit reports
 ├── src/
 │   ├── config.py              ← single source of truth for paths/runtime
 │   ├── ingestion/             ← boundaries.py (Day 2), weather.py (Day 3)
 │   ├── dashboard/             ← dashboard state/helpers (app/ frontend)
-│   ├── features/              ← (planned)
+│   ├── features/              ← (in flight)
 │   ├── models/                ← (planned)
-│   └── evaluation/            ← (planned)
+│   └── evaluation/            ← (in flight)
 └── tests/                     ← run on every push (CI)
 ```
 
@@ -124,7 +128,7 @@ virtual environment (Python 3.14.4, verified 2026-10-19 via `pip freeze`).
 ## Running the tests
 
 ```bash
-python -m pytest -q          # suite green on every commit
+python -m pytest -q          # latest run is the source of truth
 ```
 
 Geometry tests skip automatically on a fresh clone where `data/external/`
@@ -151,12 +155,28 @@ python -m src.ingestion.weather --audit
 Downloads land in `data/` with verbatim API metadata alongside; audits are
 written to `reports/dayNN_*.md`.
 
+## Live dashboard
+
+A read-only Streamlit dashboard shows the project's current state: the plan
+board, files as they land, live re-validation of the downloaded data, the
+pilot-city grid, and the outage label signal.
+
+```bash
+streamlit run app/dashboard.py
+```
+
+It reads the workspace on every refresh (default every 15 s) and never writes
+to it. The **Live grid** tab calls the Open-Meteo forecast API for current
+conditions; those values are **display-only** and must never enter training
+features or labels (leakage rule, Day 18).
+
 ## Notebooks
 
 | Notebook | Purpose |
 |---|---|
 | `notebooks/00_colab_setup.ipynb` | Day 1 — verify the project runs both locally and in Google Colab (runtime detection, deps, imports, data dirs, network access) |
 | `notebooks/01_admin_boundaries.ipynb` | Day 2 — download and inspect administrative boundaries |
+| `notebooks/02_historical_weather.ipynb` | Day 3 — download and validate historical weather for the nine pilot cities |
 
 Both are Colab-compatible; in Colab, use **File → Save a copy in Drive** before
 editing.
@@ -178,8 +198,8 @@ roadmap is in [`docs/project_plan.md`](docs/project_plan.md). In short:
 
 | Phase | Days | Focus |
 |---|---|---|
-| Foundations | 1–3 ✅ | Environment check, data inventory, administrative boundaries + audit, historical weather + audit |
-| Data acquisition | 3–7 | Historical weather, outage records/notices, World Bank indicators, source register (`reports/source_register.csv`), data audit with go/no-go per source |
+| Foundations | 1–2 ✅ | Environment check, data inventory, administrative boundaries + audit |
+| Data acquisition | 3–7 (3–4 ✅) | Historical weather + audit, outage records/notices, World Bank indicators, source register (`reports/source_register.csv`), data audit with go/no-go per source |
 | Normalization | 8–11 | Timezone-aware UTC normalization, lookup tables, planned/unplanned label separation, point-in-polygon mapping of outages to boundaries |
 | Features & leakage control | 16–18 | Context/exposure layers, feature build, forecast issue-time leakage rule enforced |
 | Modelling & product | 22–27 | Streamlit dashboard, evaluation, documented limitations |
@@ -192,9 +212,11 @@ firmed up as the build progresses; nothing there is invented.
 
 Retrieved 2026-10-19 unless noted. Per-file provenance (license, source URL,
 retrieval time) is stored verbatim in
-`data/external/boundaries/*_meta.json` and `data/raw/weather/_manifest.json`.
-Licenses marked **verify** in `reports/data_inventory.md` must be read and
-re-checked before any download or publication of derived data.
+`data/external/boundaries/*_meta.json`, `data/raw/weather/_manifest.json`, and
+`data/raw/worldbank/_manifest.json` (see
+[`docs/data_governance.md`](docs/data_governance.md) for every provenance
+convention). Licenses marked **verify** in `reports/data_inventory.md` must be
+read and re-checked before any download or publication of derived data.
 
 ### Administrative boundaries (acquired, Day 2)
 
@@ -221,11 +243,25 @@ sets carry the licenses below exactly as reported by the geoBoundaries API.
 Raw responses are stored verbatim in `data/raw/weather/` with URL, request
 parameters, SHA-256, and retrieval time in `_manifest.json`.
 
+### Outage records (Day 4, partial acquisition)
+
+| Data | License / terms | Note |
+|---|---|---|
+| South Africa — Eskom hourly grid metrics incl. Manual Load Reduction (MLR), 2017-04 → 2026-09, via an unofficial Eskom mirror (`data/raw/outages/zaf_eskom_hourly.sqlite`) | ⚠️ Mirror repo carries **no license file**; underlying data is Eskom portal output (Eskom website terms apply) | Research/portfolio use; redistribution not assured — full provenance caveat in `reports/day04_outage_sources.md` §3 |
+| Nigeria — grid-collapse incidents extractable from NERC annual reports | Public (verify per report) | Investigated Day 4, not yet downloaded |
+| Kenya — KPLC planned-interruption notices | Government utility terms (verify) | Image-only PDFs (OCR needed); depth to verify Day 10 |
+
+### World Bank outage indicators (Day 5 acquisition in flight)
+
+Indicator series downloaded via the World Bank API for KEN/ZAF/NGA with a
+`_manifest.json`; license **CC BY 4.0 per indicator (verify per indicator)**.
+National context only — no locality detail, never a geolocated label
+(inventory §D).
+
 ### Planned sources (not yet acquired)
 
-Outage records and official notices, World Bank outage indicators, weather
-forecasts, and context/exposure layers (OSM power infrastructure, WorldPop,
-night lights) are catalogued as `CANDIDATE` / `TO VERIFY` entries in
+Weather **forecasts**, and context/exposure layers (OSM power infrastructure,
+WorldPop, night lights) are catalogued as `CANDIDATE` / `TO VERIFY` entries in
 [`reports/data_inventory.md`](reports/data_inventory.md) with their licenses
 flagged for verification. **No entry in that inventory may be treated as
 settled until it is acquired, validated, and recorded in

@@ -1,389 +1,703 @@
-"""Outage records ingestion (raw intake + canonical schema).
+"""Outage record intake: raw-file path + canonical schema (Day 4 scaffolding).
 
-This module structures ingestion for power outage data following project
-principles: separate planned vs unplanned outages, preserve event times
-and notice publication times with timezone awareness, maintain provenance.
+The label source. No single public, machine-readable outage API covers all
+three pilots (see reports/data_inventory.md section C), so ingestion is built
+around a **documented raw-file intake path**:
 
-Since live public APIs may vary by utility/country, this provides:
-1. A documented raw-file intake path (preferred for reproducibility)
-2. An adapter interface for future API integrations
-3. Canonical schema definition and helpers to normalize to it
-4. Provenance metadata sidecars for any intake
+1. A source-specific adapter (future: KPLC notices, EskomSePush, NERC
+   filings — see ``OutageAdapter`` below) fetches source-native records and
+   writes them verbatim to ``data/raw/outages/{source}.json`` plus a
+   ``{source}_meta.json`` provenance sidecar (source, license, URL, SHA-256,
+   retrieval time) via ``write_raw_intake``.
+2. ``intake()`` normalizes every raw file into the canonical schema,
+   validates it and writes ``data/processed/outages.csv`` (+ meta sidecar).
 
-Do not fetch from third-party services without confirming terms; all code
-here is testable with in-memory fixtures and requires no network access
-by default.
+Canonical schema — one row per outage record:
+
+    record_id           str     stable id: "<source>:<native id>" or content hash
+    source              str     dataset id (kplc, eskom, nerc, manual, ...)
+    country_iso3        str     KEN | ZAF | NGA
+    area_name           str     locality/feeder/suburb as published
+    admin1 / admin2     str     state/province, district (nullable)
+    outage_type         str     planned | unplanned | unknown  (never collapsed)
+    event_start_utc     tz-aware datetime   supply interruption began
+    event_end_utc       tz-aware datetime   restoration (null = ongoing)
+    notice_published_utc tz-aware datetime  when the notice was published
+    customers_affected  Int64   nullable
+    status              str     ongoing / restored / cancelled / unknown
+    cause               str     nullable, as published
+    source_url          str     canonical URL of the record
+    license             str     license/terms recorded at intake
+    retrieved_utc       tz-aware datetime   when we fetched the record
+    raw_file            str     provenance: which raw file it came from
+
+Discipline enforced by ``validate``:
+  - all timestamps are timezone-aware UTC (naive inputs are converted but
+    counted in ``assumed_utc`` warnings — ambiguous source times flagged);
+  - event_end >= event_start; null event_start flagged;
+  - outage_type stays in {planned, unplanned, unknown} — planned and
+    unplanned records are never merged;
+  - duplicate record_ids flagged.
+
+Usage:
+    python -m src.ingestion.outages            # raw -> processed + summary
+    python -m src.ingestion.outages --audit    # validate, write nothing
+    python -m src.ingestion.outages --schema   # print the canonical schema
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import asdict, dataclass
-from datetime import datetime
+import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, Union
+from typing import Any, Iterable, Mapping, Protocol, Sequence
 
 import pandas as pd
 
-from src.config import DATA_RAW, ensure_dirs
+from src.config import DATA_PROCESSED, DATA_RAW, ensure_dirs
 from src.ingestion import utils
 
-OUTAGES_DIR = DATA_RAW / "outages"
+RAW_DIR = DATA_RAW / "outages"
+PROCESSED_PATH = DATA_PROCESSED / "outages.csv"
+PROCESSED_META_PATH = DATA_PROCESSED / "outages_meta.json"
 
+CANONICAL_COLUMNS: tuple[str, ...] = (
+    "record_id",
+    "source",
+    "country_iso3",
+    "area_name",
+    "admin1",
+    "admin2",
+    "outage_type",
+    "event_start_utc",
+    "event_end_utc",
+    "notice_published_utc",
+    "customers_affected",
+    "status",
+    "cause",
+    "source_url",
+    "license",
+    "retrieved_utc",
+    "raw_file",
+)
 
-def _ensure_dirs() -> None:
-    ensure_dirs()
-    OUTAGES_DIR.mkdir(parents=True, exist_ok=True)
+# Columns a record cannot be used without (everything else is nullable).
+REQUIRED_COLUMNS: tuple[str, ...] = (
+    "record_id",
+    "source",
+    "country_iso3",
+    "outage_type",
+    "event_start_utc",
+)
 
+TIME_COLUMNS: tuple[str, ...] = (
+    "event_start_utc",
+    "event_end_utc",
+    "notice_published_utc",
+    "retrieved_utc",
+)
 
-@dataclass(frozen=True)
-class OutageEvent:
-    """Canonical representation of a power outage event/record."""
+OUTAGE_TYPES: tuple[str, ...] = ("planned", "unplanned", "unknown")
 
-    # Identifiers
-    source_id: str  # e.g. "kplc", "eskom", "nerc", "manual", "synthetic"
-    record_id: str  # unique within source (or generated)
+PILOT_COUNTRIES: tuple[str, ...] = ("KEN", "ZAF", "NGA")
 
-    # Location
-    country_iso3: str  # "KEN", "ZAF", "NGA"
-    location_name: Optional[str] = None
-    admin0: Optional[str] = None
-    admin1: Optional[str] = None
-    admin2: Optional[str] = None
-    lat: Optional[float] = None
-    lon: Optional[float] = None
+# Source-native field names -> canonical names (case-insensitive, after strip).
+FIELD_ALIASES: dict[str, str] = {
+    "id": "record_id",
+    "notice_id": "record_id",
+    "event_id": "record_id",
+    "country": "country_iso3",
+    "iso3": "country_iso3",
+    "location": "area_name",
+    "area": "area_name",
+    "suburb": "area_name",
+    "feeder": "area_name",
+    "place": "area_name",
+    "state": "admin1",
+    "province": "admin1",
+    "region": "admin1",
+    "county": "admin1",
+    "district": "admin2",
+    "lga": "admin2",
+    "subcounty": "admin2",
+    "type": "outage_type",
+    "kind": "outage_type",
+    "start": "event_start_utc",
+    "start_time": "event_start_utc",
+    "event_start": "event_start_utc",
+    "outage_start": "event_start_utc",
+    "begin": "event_start_utc",
+    "end": "event_end_utc",
+    "end_time": "event_end_utc",
+    "event_end": "event_end_utc",
+    "outage_end": "event_end_utc",
+    "restored": "event_end_utc",
+    "restoration_time": "event_end_utc",
+    "published": "notice_published_utc",
+    "notice_time": "notice_published_utc",
+    "notice_published": "notice_published_utc",
+    "published_at": "notice_published_utc",
+    "customers": "customers_affected",
+    "customers_affected": "customers_affected",
+    "affected_customers": "customers_affected",
+    "url": "source_url",
+    "link": "source_url",
+    "description": "cause",
+}
 
-    # Outage classification
-    outage_type: str = "unknown"  # "planned", "unplanned", "maintenance", "unknown"
-    is_planned: Optional[bool] = None
+# Country names sometimes used where ISO3 is expected.
+COUNTRY_TO_ISO3: dict[str, str] = {
+    "kenya": "KEN",
+    "south africa": "ZAF",
+    "nigeria": "NGA",
+}
 
-    # Times (timezone-aware preferred; store as ISO8601 strings)
-    event_start_utc: Optional[str] = None
-    event_end_utc: Optional[str] = None
-    event_start_local: Optional[str] = None
-    event_end_local: Optional[str] = None
-    notice_published_utc: Optional[str] = None
-    notice_published_local: Optional[str] = None
-    restored_utc: Optional[str] = None
-    last_updated_utc: Optional[str] = None
-
-    # Impact
-    affected_customers: Optional[int] = None
-    affected_areas: Optional[List[str]] = None
-    duration_minutes: Optional[float] = None
-    cause: Optional[str] = None
-    status: Optional[str] = None  # "ongoing", "restored", "cancelled", "unknown"
-
-    # Provenance
-    source_url: Optional[str] = None
-    retrieved_utc: Optional[str] = None
-    raw_file: Optional[str] = None
-    notes: Optional[str] = None
-    license: Optional[str] = None
-    license_url: Optional[str] = None
-
-    # Extras (non-breaking)
-    extra: Optional[Dict[str, Any]] = None
+# outage_type synonyms from source-native values -> canonical vocabulary.
+OUTAGE_TYPE_SYNONYMS: dict[str, str] = {
+    "planned": "planned",
+    "planned outage": "planned",
+    "scheduled": "planned",
+    "scheduled outage": "planned",
+    "maintenance": "planned",
+    "load shedding": "unplanned",
+    "unplanned": "unplanned",
+    "unplanned outage": "unplanned",
+    "unscheduled": "unplanned",
+    "forced": "unplanned",
+    "fault": "unplanned",
+    "emergency": "unplanned",
+    "unknown": "unknown",
+    "": "unknown",
+}
 
 
 class OutageAdapter(Protocol):
-    """Adapter interface for fetching outage records from a source."""
+    """Interface for a source-specific outage fetcher (Day 4+).
 
-    def fetch(self) -> List[Dict[str, Any]]:  # pragma: no cover - protocol
-        """Fetch raw records as list of dicts."""
-        ...
+    Implementations (one per source: KPLC, EskomSePush, NERC, ...) fetch
+    source-native records and hand them back untouched; normalization to the
+    canonical schema is this module's job, not the adapter's.
 
-    def normalize(self, raw: List[Dict[str, Any]]) -> List[OutageEvent]:  # pragma: no cover
-        """Normalize raw records to canonical OutageEvent objects."""
-        ...
-
-    @property
-    def source_id(self) -> str:  # pragma: no cover
-        ...
-
-
-def normalize_record(raw: Dict[str, Any], *, source_id: str, record_id_field: str = "record_id") -> OutageEvent:
-    """Normalize a raw dict into OutageEvent.
-
-    This is defensive - unknown fields go to extra; required fields have safe defaults.
+    Contract:
+      * ``source`` / ``license`` are stable dataset identifiers recorded in
+        provenance (license must come from the source's actual terms);
+      * ``fetch()`` returns raw records as dicts and performs its own network
+        access — nothing else in this package calls the network for outages;
+      * callers persist the result with ``write_raw_intake`` so raw bytes and
+        provenance land in ``data/raw/outages/`` before any processing.
     """
-    extra: Dict[str, Any] = {}
-    known_keys = set(OutageEvent.__dataclass_fields__.keys())  # type: ignore[attr-defined]
-    for k, v in raw.items():
-        if k in known_keys:
-            continue
-        extra[k] = v
 
-    record_id = str(raw.get(record_id_field) or raw.get("id") or raw.get("uuid") or f"unk_{utils.sha256_bytes(json.dumps(raw, sort_keys=True).encode())[:8]}")
+    source: str
+    license: str
 
-    outage_type = str(raw.get("outage_type") or raw.get("type") or "unknown").lower()
-    is_planned = raw.get("is_planned")
-    if is_planned is None:
-        is_planned = outage_type in ("planned", "scheduled", "maintenance")
-
-    affected_areas = raw.get("affected_areas") or raw.get("areas") or raw.get("locations")
-    if isinstance(affected_areas, str):
-        affected_areas = [a.strip() for a in affected_areas.split(",") if a.strip()]
-
-    return OutageEvent(
-        source_id=source_id,
-        record_id=record_id,
-        country_iso3=str(raw.get("country_iso3") or raw.get("country") or "UNK"),
-        location_name=raw.get("location_name") or raw.get("location") or raw.get("name"),
-        admin0=raw.get("admin0") or raw.get("province") or raw.get("state"),
-        admin1=raw.get("admin1") or raw.get("county") or raw.get("region"),
-        admin2=raw.get("admin2") or raw.get("sub_county") or raw.get("district"),
-        lat=_safe_float(raw.get("lat") or raw.get("latitude")),
-        lon=_safe_float(raw.get("lon") or raw.get("longitude")),
-        outage_type=outage_type,
-        is_planned=is_planned,
-        event_start_utc=_iso_or_none(raw.get("event_start_utc") or raw.get("start_utc") or raw.get("start")),
-        event_end_utc=_iso_or_none(raw.get("event_end_utc") or raw.get("end_utc") or raw.get("end")),
-        event_start_local=_iso_or_none(raw.get("event_start_local") or raw.get("start_local")),
-        event_end_local=_iso_or_none(raw.get("event_end_local") or raw.get("end_local")),
-        notice_published_utc=_iso_or_none(raw.get("notice_published_utc") or raw.get("published_utc") or raw.get("notice_time_utc")),
-        notice_published_local=_iso_or_none(raw.get("notice_published_local") or raw.get("published_local")),
-        restored_utc=_iso_or_none(raw.get("restored_utc") or raw.get("restoration_utc")),
-        last_updated_utc=_iso_or_none(raw.get("last_updated_utc") or raw.get("updated_utc")),
-        affected_customers=_safe_int(raw.get("affected_customers") or raw.get("customers")),
-        affected_areas=affected_areas if isinstance(affected_areas, list) else None,
-        duration_minutes=_safe_float(raw.get("duration_minutes")),
-        cause=raw.get("cause"),
-        status=raw.get("status"),
-        source_url=raw.get("source_url") or raw.get("url"),
-        retrieved_utc=raw.get("retrieved_utc") or utils.utc_now_iso(),
-        raw_file=raw.get("raw_file"),
-        notes=raw.get("notes"),
-        license=raw.get("license"),
-        license_url=raw.get("license_url"),
-        extra=extra or None,
-    )
+    def fetch(self) -> list[dict[str, Any]]:  # pragma: no cover - protocol
+        ...
 
 
-def _safe_float(v: Any) -> Optional[float]:
-    try:
-        if v is None:
-            return None
-        return float(v)
-    except (TypeError, ValueError):
-        return None
+# ---------------------------------------------------------------------------
+# Raw-file intake (adapters and manual drops share this path)
+# ---------------------------------------------------------------------------
 
-
-def _safe_int(v: Any) -> Optional[int]:
-    try:
-        if v is None:
-            return None
-        return int(v)
-    except (TypeError, ValueError):
-        return None
-
-
-def _iso_or_none(v: Any) -> Optional[str]:
-    if v is None:
-        return None
-    if isinstance(v, datetime):
-        if v.tzinfo is None:
-            # Treat naive as UTC for consistency? But project says preserve times;
-            # better to store as-is if string; but we normalize datetime.
-            v = v.replace(tzinfo=__import__("datetime").timezone.utc)
-        return v.astimezone(__import__("datetime").timezone.utc).isoformat(timespec="seconds")
-    if isinstance(v, str):
-        s = v.strip()
-        if not s:
-            return None
-        return s  # keep as-is; caller ensures tz-aware
-    return str(v)
-
-
-def events_to_dataframe(events: List[OutageEvent]) -> pd.DataFrame:
-    """Convert list of OutageEvent to DataFrame."""
-    rows = [asdict(e) for e in events]
-    df = pd.DataFrame(rows)
-    return df
-
-
-def dataframe_to_events(df: pd.DataFrame) -> List[OutageEvent]:
-    """Convert DataFrame back to OutageEvent list."""
-    events: List[OutageEvent] = []
-    for _, row in df.iterrows():
-        data = row.to_dict()
-        if isinstance(data.get("affected_areas"), str):
-            try:
-                data["affected_areas"] = json.loads(data["affected_areas"])
-            except Exception:
-                pass
-        if isinstance(data.get("extra"), str):
-            try:
-                data["extra"] = json.loads(data["extra"])
-            except Exception:
-                pass
-        events.append(OutageEvent(**data))  # type: ignore[arg-type]
-    return events
-
-
-def save_raw_intake(
-    records: List[Dict[str, Any]],
-    *,
+def write_raw_intake(
+    records: Sequence[Mapping[str, Any]],
     name: str,
-    source_id: str,
-    country_iso3: Optional[str] = None,
-    source_url: Optional[str] = None,
-    license: Optional[str] = None,
-    notes: Optional[str] = None,
-    overwrite: bool = False,
+    *,
+    source: str,
+    license: str = "unknown",
+    country_iso3: str | None = None,
+    source_url: str | None = None,
+    notes: str | None = None,
+    raw_dir: Path | None = None,
 ) -> Path:
-    """Save raw intake records to data/raw/outages/ as JSON.
+    """Persist raw records verbatim plus a ``{name}_meta.json`` sidecar.
 
-    Also writes a provenance sidecar {name}_meta.json.
+    Returns the JSON path. Re-running with the same name overwrites both
+    files (adapters are expected to re-fetch whole snapshots, not merge).
     """
-    _ensure_dirs()
-    safe_name = utils.sanitize_filename(name)
-    raw_path = OUTAGES_DIR / f"{safe_name}.json"
-    meta_path = OUTAGES_DIR / f"{safe_name}_meta.json"
-
-    if raw_path.exists() and not overwrite:
-        # Don't overwrite by default - idempotent behavior
-        pass
-
-    raw_payload = {
-        "source_id": source_id,
+    raw_dir = Path(raw_dir) if raw_dir else RAW_DIR
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    safe = utils.sanitize_filename(name)
+    payload = {
+        "source": source,
         "country_iso3": country_iso3,
-        "records": records,
-        "record_count": len(records),
-        "retrieved_utc": utils.utc_now_iso(),
-        "source_url": source_url,
-        "notes": notes,
+        "records": [dict(r) for r in records],
     }
-    utils.write_json(raw_path, raw_payload)
-
-    meta = {
-        "raw_file": raw_path.name,
-        "source_id": source_id,
-        "country_iso3": country_iso3,
-        "record_count": len(records),
-        "retrieved_utc": utils.utc_now_iso(),
-        "source_url": source_url,
-        "license": license,
-        "notes": notes,
-        "format": "json",
-    }
-    utils.write_json(meta_path, meta)
+    raw_path = raw_dir / f"{safe}.json"
+    utils.write_json(raw_path, payload)
+    utils.write_provenance(
+        raw_dir / f"{safe}_meta.json",
+        {
+            "raw_file": raw_path.name,
+            "source": source,
+            "country_iso3": country_iso3,
+            "record_count": len(records),
+            "license": license,
+            "source_url": source_url,
+            "retrieved_utc": utils.utc_now_iso(),
+            "sha256": utils.sha256_file(raw_path),
+            "notes": notes,
+        },
+    )
     return raw_path
 
 
-def load_raw_intake(path: Path) -> Dict[str, Any]:
-    """Load raw intake JSON."""
-    return utils.read_json(path)
+def discover_raw_files(raw_dir: Path | None = None) -> list[Path]:
+    """Raw intake files in a deterministic order (sidecars/manifests excluded)."""
+    raw_dir = Path(raw_dir) if raw_dir else RAW_DIR
+    if not raw_dir.exists():
+        return []
+    return sorted(
+        p
+        for p in raw_dir.iterdir()
+        if p.is_file()
+        and p.suffix.lower() in {".json", ".csv"}
+        and not p.name.startswith("_")
+        and not p.name.endswith("_meta.json")
+    )
 
 
-def load_events_from_raw(path: Path, *, source_id: Optional[str] = None) -> List[OutageEvent]:
-    """Load and normalize events from a raw intake file."""
-    payload = load_raw_intake(path)
-    source_id = source_id or payload.get("source_id") or "unknown"
-    records = payload.get("records") or []
-    events = [normalize_record(r, source_id=source_id) for r in records]
-    return events
-
-
-def write_events_csv(events: List[OutageEvent], out_path: Path) -> Path:
-    """Write canonical events to CSV."""
-    df = events_to_dataframe(events)
-    utils.ensure_parent(out_path)
-    df.to_csv(out_path, index=False, encoding="utf-8")
-    return out_path
-
-
-def write_events_parquet(events: List[OutageEvent], out_path: Path) -> Path:
-    """Write canonical events to Parquet if pyarrow available."""
-    df = events_to_dataframe(events)
-    utils.ensure_parent(out_path)
-    try:
-        df.to_parquet(out_path, index=False)
-    except Exception:
-        # Fallback to CSV if parquet not available
-        csv_path = out_path.with_suffix(".csv")
-        df.to_csv(csv_path, index=False, encoding="utf-8")
-        return csv_path
-    return out_path
-
-
-def create_synthetic_fixture(
-    n: int = 5,
-    *,
-    country_iso3: str = "KEN",
-    planned_ratio: float = 0.5,
-) -> List[Dict[str, Any]]:
-    """Create small synthetic outage records for testing (no network)."""
-    from datetime import timedelta, timezone
-
-    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
-    records: List[Dict[str, Any]] = []
-    for i in range(n):
-        is_planned = i < int(n * planned_ratio)
-        start = base + timedelta(hours=i * 2)
-        end = start + timedelta(hours=2)
-        records.append(
-            {
-                "record_id": f"syn_{i:03d}",
-                "country_iso3": country_iso3,
-                "location_name": f"Area {i}",
-                "admin1": "Nairobi" if country_iso3 == "KEN" else ("Gauteng" if country_iso3 == "ZAF" else "Lagos"),
-                "outage_type": "planned" if is_planned else "unplanned",
-                "is_planned": is_planned,
-                "event_start_utc": start.isoformat(timespec="seconds"),
-                "event_end_utc": end.isoformat(timespec="seconds"),
-                "notice_published_utc": (start - timedelta(days=1)).isoformat(timespec="seconds") if is_planned else None,
-                "cause": "maintenance" if is_planned else "fault",
-                "status": "restored",
-                "affected_customers": 100 + i * 10,
-                "source_id": "synthetic",
-            }
+def _load_raw_records(path: Path) -> list[dict[str, Any]]:
+    """Read one raw intake file (JSON list, {"records": [...]} object, or CSV)."""
+    if path.suffix.lower() == ".csv":
+        return pd.read_csv(path).to_dict("records")
+    payload = utils.read_json(path, default=None)
+    if payload is None:
+        raise utils.SchemaError(f"{path}: empty or unreadable JSON")
+    if isinstance(payload, list):
+        records = payload
+    elif isinstance(payload, dict) and isinstance(payload.get("records"), list):
+        records = payload["records"]
+    else:
+        raise utils.SchemaError(
+            f"{path}: expected a JSON list or an object with a 'records' list"
         )
+    if not all(isinstance(r, dict) for r in records):
+        raise utils.SchemaError(f"{path}: every record must be a JSON object")
     return records
 
 
+def _sidecar_for(path: Path) -> dict[str, Any]:
+    """Provenance sidecar for a raw file, or {} when absent."""
+    if path.suffix.lower() != ".json":
+        return {}
+    meta = utils.read_json(path.with_name(f"{path.stem}_meta.json"), default={})
+    return meta if isinstance(meta, dict) else {}
+
+
+# ---------------------------------------------------------------------------
+# Normalization
+# ---------------------------------------------------------------------------
+
+def _canonical_key(key: Any) -> str:
+    k = str(key).strip().lower().replace(" ", "_")
+    return FIELD_ALIASES.get(k, k)
+
+
+def _canonical_outage_type(value: Any) -> str:
+    if isinstance(value, bool):
+        return "planned" if value else "unplanned"
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "unknown"
+    key = str(value).strip().lower()
+    if key in OUTAGE_TYPE_SYNONYMS:
+        return OUTAGE_TYPE_SYNONYMS[key]
+    if "plan" in key or "schedul" in key or "maintenance" in key:
+        return "planned"
+    if "unplan" in key or "unschedul" in key:
+        return "unplanned"
+    return "unknown"
+
+
+def _canonical_country(value: Any) -> str | None:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    iso = COUNTRY_TO_ISO3.get(text.lower(), text.upper())
+    return iso if len(iso) == 3 else None
+
+
+def normalize_record(
+    raw: Mapping[str, Any],
+    *,
+    source: str,
+    license: str = "unknown",
+    raw_file: str | None = None,
+) -> tuple[dict[str, Any], list[str]]:
+    """Normalize one source-native record to the canonical schema.
+
+    Returns ``(row, warnings)``. Timestamps are parsed with
+    ``utils.parse_time``: aware values convert to UTC, naive values are
+    localized to UTC but warned about (source times are ambiguous), and
+    unparseable values become NaT with a warning.
+    """
+    warnings: list[str] = []
+    row: dict[str, Any] = {c: None for c in CANONICAL_COLUMNS}
+    seen_keys: set[str] = set()
+
+    for key, value in raw.items():
+        ckey = _canonical_key(key)
+        if ckey in CANONICAL_COLUMNS and ckey not in seen_keys:
+            seen_keys.add(ckey)
+            row[ckey] = value
+
+    row["source"] = source
+    row["license"] = license
+    if raw_file is not None:
+        row["raw_file"] = raw_file
+
+    row["country_iso3"] = _canonical_country(row.get("country_iso3"))
+    row["outage_type"] = _canonical_outage_type(row.get("outage_type"))
+
+    # Stable id: prefer the source's own id; otherwise hash the content so a
+    # re-run of the same raw file yields the same id (idempotent re-intake).
+    native = row.get("record_id")
+    if native is not None and not (isinstance(native, float) and pd.isna(native)) and str(native).strip():
+        row["record_id"] = f"{source}:{native}"
+    else:
+        basis = json.dumps(
+            {
+                "source": source,
+                "country": row.get("country_iso3"),
+                "area": str(row.get("area_name") or ""),
+                "start": str(row.get("event_start_utc") or ""),
+            },
+            sort_keys=True,
+        )
+        row["record_id"] = f"{source}:h{utils.sha256_bytes(basis.encode('utf-8'))[:12]}"
+
+    for col in TIME_COLUMNS:
+        value = row.get(col)
+        if value is None:
+            row[col] = pd.NaT
+            continue
+        ts, assumed, invalid = utils.parse_time(value)
+        if invalid:
+            warnings.append(f"{row['record_id']}: unparseable {col}={value!r}")
+            row[col] = pd.NaT
+        else:
+            if assumed:
+                warnings.append(
+                    f"{row['record_id']}: naive {col}={value!r} assumed UTC"
+                )
+            row[col] = ts if ts is not None else pd.NaT
+
+    if row["retrieved_utc"] is None or pd.isna(row["retrieved_utc"]):
+        row["retrieved_utc"] = pd.Timestamp(utils.utc_now_iso())
+
+    customers = row.get("customers_affected")
+    if customers is None or (isinstance(customers, float) and pd.isna(customers)):
+        row["customers_affected"] = pd.NA
+    else:
+        try:
+            row["customers_affected"] = int(customers)
+        except (TypeError, ValueError):
+            warnings.append(
+                f"{row['record_id']}: non-numeric customers_affected={customers!r}"
+            )
+            row["customers_affected"] = pd.NA
+
+    for col in ("area_name", "admin1", "admin2", "status", "cause", "source_url"):
+        value = row.get(col)
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            row[col] = None
+        else:
+            row[col] = str(value)
+
+    return row, warnings
+
+
+def normalize_records(
+    records: Iterable[Mapping[str, Any]],
+    *,
+    source: str,
+    license: str = "unknown",
+    raw_file: str | None = None,
+) -> tuple[pd.DataFrame, list[str]]:
+    """Normalize many records; returns ``(canonical DataFrame, warnings)``.
+
+    The frame always has exactly ``CANONICAL_COLUMNS`` in order, with
+    tz-aware datetime dtypes even when empty.
+    """
+    rows: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    for record in records:
+        row, row_warnings = normalize_record(
+            record, source=source, license=license, raw_file=raw_file
+        )
+        rows.append(row)
+        warnings.extend(row_warnings)
+
+    df = pd.DataFrame(rows, columns=list(CANONICAL_COLUMNS))
+    for col in TIME_COLUMNS:
+        df[col] = pd.to_datetime(df[col], utc=True)
+    df["customers_affected"] = pd.array(df["customers_affected"], dtype="Int64")
+    return df, warnings
+
+
+# ---------------------------------------------------------------------------
+# Validation
+# ---------------------------------------------------------------------------
+
+def validate(df: pd.DataFrame) -> dict[str, Any]:
+    """Structural checks on a canonical frame; returns a JSON-safe report.
+
+    ``ok`` is True only when there are no errors (warnings such as naive
+    source timestamps or non-pilot countries do not fail validation — they
+    are surfaced so Day 7's audit can decide).
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    missing = utils.missing_columns(df, CANONICAL_COLUMNS)
+    if missing:
+        return {
+            "ok": False,
+            "errors": [f"missing columns: {', '.join(missing)}"],
+            "warnings": [],
+            "counts": {},
+        }
+
+    for col in TIME_COLUMNS:
+        if not utils.is_tz_aware(df[col]):
+            errors.append(f"{col}: not a tz-aware datetime column")
+
+    null_start = df["event_start_utc"].isna()
+    if int(null_start.sum()):
+        errors.append(f"{int(null_start.sum())} record(s) with null event_start_utc")
+
+    bad_type = ~df["outage_type"].isin(OUTAGE_TYPES)
+    if int(bad_type.sum()):
+        values = sorted(df.loc[bad_type, "outage_type"].astype(str).unique())
+        errors.append(f"outage_type outside {OUTAGE_TYPES}: {values}")
+
+    both = df["event_end_utc"].notna() & df["event_start_utc"].notna()
+    backwards = both & (df["event_end_utc"] < df["event_start_utc"])
+    if int(backwards.sum()):
+        ids = df.loc[backwards, "record_id"].head(5).tolist()
+        errors.append(
+            f"{int(backwards.sum())} record(s) with event_end < event_start (e.g. {ids})"
+        )
+
+    dupes = int(df["record_id"].duplicated().sum())
+    if dupes:
+        warnings.append(f"{dupes} duplicate record_id value(s)")
+
+    off_pilot = df["country_iso3"].notna() & ~df["country_iso3"].isin(PILOT_COUNTRIES)
+    if int(off_pilot.sum()):
+        values = sorted(df.loc[off_pilot, "country_iso3"].unique())
+        warnings.append(f"records outside pilot countries: {values}")
+
+    open_outages = int(
+        (df["event_end_utc"].isna() & df["event_start_utc"].notna()).sum()
+    )
+    if open_outages:
+        warnings.append(f"{open_outages} record(s) without event_end_utc (ongoing)")
+
+    counts = {
+        "rows": int(len(df)),
+        "by_outage_type": {
+            str(k): int(v) for k, v in df["outage_type"].value_counts().items()
+        },
+        "by_country": {
+            str(k): int(v)
+            for k, v in df["country_iso3"].fillna("<null>").value_counts().items()
+        },
+        "by_source": {str(k): int(v) for k, v in df["source"].value_counts().items()},
+        "null_event_end": open_outages,
+    }
+    return {"ok": not errors, "errors": errors, "warnings": warnings, "counts": counts}
+
+
+# ---------------------------------------------------------------------------
+# Intake pipeline (raw -> processed)
+# ---------------------------------------------------------------------------
+
+def load_processed(path: Path | None = None) -> pd.DataFrame:
+    """Read ``data/processed/outages.csv`` back with tz-aware time columns."""
+    path = Path(path) if path else PROCESSED_PATH
+    df = pd.read_csv(path, dtype={"record_id": str, "source": str})
+    for col in TIME_COLUMNS:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], utc=True)
+    if "customers_affected" in df.columns:
+        df["customers_affected"] = pd.array(
+            df["customers_affected"], dtype="Int64"
+        )
+    return df
+
+
+def intake(
+    raw_dir: Path | None = None,
+    out_path: Path | None = None,
+    *,
+    write: bool = True,
+) -> dict[str, Any]:
+    """Normalize every raw intake file, validate, and (optionally) write.
+
+    Returns a summary dict: files processed, row counts, warnings, validation
+    report, and output paths. With ``write=False`` nothing touches disk
+    (used by ``--audit``).
+    """
+    raw_dir = Path(raw_dir) if raw_dir else RAW_DIR
+    out_path = Path(out_path) if out_path else PROCESSED_PATH
+    # Sidecar follows the output file (default: PROCESSED_META_PATH), so an
+    # overridden --out never writes metadata over the real processed file.
+    meta_path = out_path.with_name(out_path.stem + "_meta.json")
+    ensure_dirs()
+
+    files = discover_raw_files(raw_dir)
+    if not files:
+        return {
+            "files": [],
+            "rows": 0,
+            "warnings": [],
+            "validation": {"ok": False, "errors": ["no raw intake files found"],
+                           "warnings": [], "counts": {}},
+            "written": None,
+            "meta": None,
+        }
+
+    frames: list[pd.DataFrame] = []
+    warnings: list[str] = []
+    inputs: list[dict[str, Any]] = []
+
+    for path in files:
+        meta = _sidecar_for(path)
+        source = str(meta.get("source") or path.stem)
+        license_ = str(meta.get("license") or "unknown")
+        if not meta:
+            warnings.append(f"{path.name}: no provenance sidecar; source assumed '{source}'")
+        if license_ == "unknown":
+            warnings.append(f"{path.name}: license not recorded")
+        try:
+            records = _load_raw_records(path)
+        except utils.SchemaError as exc:
+            warnings.append(str(exc))
+            continue
+        frame, frame_warnings = normalize_records(
+            records, source=source, license=license_, raw_file=path.name
+        )
+        frames.append(frame)
+        warnings.extend(frame_warnings)
+        inputs.append(
+            {
+                "raw_file": path.name,
+                "source": source,
+                "license": license_,
+                "records": len(records),
+                "sha256": meta.get("sha256") or utils.sha256_file(path),
+            }
+        )
+
+    if frames:
+        df = pd.concat(frames, ignore_index=True)
+        before = len(df)
+        df = df.drop_duplicates(subset="record_id", keep="first").reset_index(drop=True)
+        if before != len(df):
+            warnings.append(f"dropped {before - len(df)} duplicate record_id row(s)")
+    else:
+        df, _ = normalize_records([], source="empty")
+
+    report = validate(df)
+    written: str | None = None
+    if write and report["ok"]:
+        utils.ensure_parent(out_path)
+        df.to_csv(out_path, index=False, encoding="utf-8")
+        utils.write_provenance(
+            meta_path,
+            {
+                "generated_utc": utils.utc_now_iso(),
+                "inputs": inputs,
+                "rows": int(len(df)),
+                "columns": list(df.columns),
+                "validation": report,
+            },
+        )
+        written = str(out_path)
+
+    return {
+        "files": [p.name for p in files],
+        "rows": int(len(df)),
+        "warnings": warnings,
+        "validation": report,
+        "written": written,
+        "meta": str(meta_path) if written else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def _print_summary(summary: Mapping[str, Any]) -> None:
+    report = summary["validation"]
+    print(f"files:   {', '.join(summary['files']) or 'none'}")
+    print(f"rows:    {summary['rows']}")
+    for kind in ("by_source", "by_outage_type", "by_country"):
+        if report["counts"].get(kind):
+            parts = ", ".join(f"{k}={v}" for k, v in sorted(report["counts"][kind].items()))
+            print(f"{kind.replace('by_', ''):8s} {parts}")
+    for warning in summary["warnings"]:
+        print(f"  [warn] {warning}")
+    for error in report["errors"]:
+        print(f"  [FAIL] {error}", file=sys.stderr)
+    if summary.get("written"):
+        print(f"wrote:   {summary['written']}")
+        print(f"meta:    {summary.get('meta')}")
+    elif report["ok"]:
+        print("wrote:   (skipped — --audit)")
+    else:
+        print("wrote:   (skipped — validation failed)", file=sys.stderr)
+
+
+def _print_schema() -> int:
+    descriptions = {
+        "record_id": "str — stable id, '<source>:<native id>' or content hash",
+        "source": "str — dataset id (kplc, eskom, nerc, manual, ...)",
+        "country_iso3": "str — KEN | ZAF | NGA",
+        "area_name": "str — locality/feeder/suburb as published",
+        "admin1": "str — state/province (nullable)",
+        "admin2": "str — district/LGA (nullable)",
+        "outage_type": "str — planned | unplanned | unknown (never merged)",
+        "event_start_utc": "datetime64[ns, UTC] — interruption began",
+        "event_end_utc": "datetime64[ns, UTC] — restoration; null = ongoing",
+        "notice_published_utc": "datetime64[ns, UTC] — notice publication time",
+        "customers_affected": "Int64 — nullable",
+        "status": "str — ongoing / restored / cancelled / unknown",
+        "cause": "str — as published (nullable)",
+        "source_url": "str — canonical URL of the record",
+        "license": "str — license recorded at intake",
+        "retrieved_utc": "datetime64[ns, UTC] — when we fetched the record",
+        "raw_file": "str — provenance: source raw file",
+    }
+    print(f"{'column':22s} {'required':8s} description")
+    for col in CANONICAL_COLUMNS:
+        req = "yes" if col in REQUIRED_COLUMNS else "no"
+        print(f"{col:22s} {req:8s} {descriptions[col]}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
-    """CLI for outages ingestion (demo with synthetic data)."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--country", default="KEN", choices=["KEN", "ZAF", "NGA"])
-    parser.add_argument("--n", type=int, default=10, help="number of synthetic records")
-    parser.add_argument("--planned-ratio", type=float, default=0.4)
-    parser.add_argument("--save-raw", action="store_true", help="save synthetic intake to raw/")
-    parser.add_argument("--audit", action="store_true", help="load and summarize existing raw intakes")
+    parser.add_argument("--audit", action="store_true",
+                        help="validate raw intake without writing processed output")
+    parser.add_argument("--schema", action="store_true",
+                        help="print the canonical outage schema and exit")
+    parser.add_argument("--raw-dir", default=None, help="override raw intake directory")
+    parser.add_argument("--out", default=None, help="override processed output path")
     args = parser.parse_args(argv)
 
-    _ensure_dirs()
+    if args.schema:
+        return _print_schema()
 
-    if args.audit:
-        paths = sorted(OUTAGES_DIR.glob("*.json"))
-        paths = [p for p in paths if not p.name.endswith("_meta.json")]
-        if not paths:
-            print("No outage intake files found.", file=__import__("sys").stderr)
-            return 1
-        for p in paths:
-            try:
-                events = load_events_from_raw(p)
-                df = events_to_dataframe(events)
-                planned = int(df["is_planned"].sum()) if "is_planned" in df else 0
-                print(f"{p.name}: {len(events)} events, planned={planned}, unplanned={len(events)-planned}")
-            except Exception as exc:
-                print(f"ERROR loading {p.name}: {exc}", file=__import__("sys").stderr)
-        return 0
-
-    records = create_synthetic_fixture(n=args.n, country_iso3=args.country, planned_ratio=args.planned_ratio)
-    if args.save_raw:
-        raw_path = save_raw_intake(
-            records,
-            name=f"{args.country.lower()}_synthetic_outages",
-            source_id="synthetic",
-            country_iso3=args.country,
-            notes="Synthetic fixture for testing/demo",
-        )
-        print(f"Saved raw intake to {raw_path}")
-    else:
-        print(f"Generated {len(records)} synthetic outage records (not saved)")
-    return 0
+    summary = intake(args.raw_dir, args.out, write=not args.audit)
+    _print_summary(summary)
+    if not summary["files"]:
+        return 1
+    return 0 if summary["validation"]["ok"] else 1
 
 
 if __name__ == "__main__":

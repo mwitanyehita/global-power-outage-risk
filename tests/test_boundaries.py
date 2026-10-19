@@ -2,8 +2,13 @@
 
 Geometry tests require the Day 2 downloads in data/external/boundaries/
 (git-ignored); they skip automatically when the files are absent.
+
+The synthetic-geometry tests below always run: they exercise bbox/unit
+invariants, metadata-free inspection, and the network-free skip path of
+``download`` without touching the internet.
 """
 
+import datetime as dt
 import json
 
 import pytest
@@ -24,6 +29,39 @@ def test_pilot_and_level_constants():
     for iso3 in bnd.PILOT_COUNTRIES:
         for adm in ("ADM0", "ADM1", "ADM2"):
             assert (iso3, adm) in bnd.EXPECTED_UNITS
+
+
+def test_expected_bbox_covers_pilot_capitals():
+    """Each pilot's sanity bbox must contain a well-known city coordinate.
+
+    Guards against a typo'd envelope that would flag every real download
+    as out-of-bbox (or, worse, accept grossly wrong geometry).
+    """
+    capitals = {
+        "KEN": (36.8, -1.3),   # Nairobi
+        "ZAF": (18.4, -33.9),  # Cape Town
+        "NGA": (3.4, 6.5),     # Lagos
+    }
+    assert set(capitals) == set(bnd.PILOT_COUNTRIES)
+    for iso3, (lon, lat) in capitals.items():
+        west, south, east, north = bnd.EXPECTED_BBOX[iso3]
+        assert west <= lon <= east, f"{iso3}: lon {lon} outside {bnd.EXPECTED_BBOX[iso3]}"
+        assert south <= lat <= north, f"{iso3}: lat {lat} outside {bnd.EXPECTED_BBOX[iso3]}"
+
+
+def test_utc_now_is_aware_utc_iso_string():
+    parsed = dt.datetime.fromisoformat(bnd._utc_now())
+    assert parsed.tzinfo is not None
+    assert parsed.utcoffset() == dt.timedelta(0)
+
+
+def test_looks_like_geojson_rejects_junk_and_accepts_featurecollection():
+    assert bnd._looks_like_geojson(
+        b'{"type": "FeatureCollection", "features": [{"type": "Feature"}]}'
+    )
+    assert not bnd._looks_like_geojson(b"not json at all")
+    assert not bnd._looks_like_geojson(b'{"type": "FeatureCollection", "features": []}')
+    assert not bnd._looks_like_geojson(b'[1, 2, 3]')
 
 
 def _downloaded_files():
@@ -82,13 +120,14 @@ def test_write_audit_creates_report(tmp_path):
     assert "EPSG:4326" in text
 
 
-def _synthetic_boundary(tmp_path, stem, names, meta_units):
+def _synthetic_boundary(tmp_path, stem, names, meta_units, boxes=None):
     """Write a tiny GeoJSON + metadata pair that mimics a real download."""
     import geopandas as gpd
     from shapely.geometry import box
 
-    geoms = [box(34 + i * 0.1, -1, 34.05 + i * 0.1, -0.5) for i in range(len(names))]
-    gdf = gpd.GeoDataFrame({"shapeName": names}, geometry=geoms, crs=4326)
+    if boxes is None:
+        boxes = [box(34 + i * 0.1, -1, 34.05 + i * 0.1, -0.5) for i in range(len(names))]
+    gdf = gpd.GeoDataFrame({"shapeName": names}, geometry=boxes, crs=4326)
     path = tmp_path / f"{stem}.geojson"
     gdf.to_file(path, driver="GeoJSON")
     meta = {
@@ -118,3 +157,50 @@ def test_inspect_flags_count_and_name_problems(tmp_path):
     assert info["count_ok"] is False
     assert info["dup_names"] == 1
     assert info["bbox_ok"] is True
+
+
+def test_inspect_without_metadata_sidecar_reports_unknown_counts(tmp_path):
+    """No sidecar -> count_ok is None (unknown), license falls back to '?'."""
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    gdf = gpd.GeoDataFrame(
+        {"shapeName": ["Somewhere"]}, geometry=[box(34.0, -1.0, 34.5, -0.5)], crs=4326
+    )
+    path = tmp_path / "KEN_ADM1.geojson"
+    gdf.to_file(path, driver="GeoJSON")  # deliberately no *_meta.json sidecar
+
+    info = bnd.inspect(path)
+    assert info["count_ok"] is None
+    assert info["meta_units"] is None
+    assert info["license"] == "?"
+    assert info["source"] == "?"
+    assert info["bbox_ok"] is True
+
+
+def test_inspect_flags_geometry_outside_expected_bbox(tmp_path):
+    """A KEN polygon in the Gulf of Guinea must fail the bbox sanity check."""
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    gdf = gpd.GeoDataFrame(
+        {"shapeName": ["Wrong"]}, geometry=[box(4.0, 5.0, 5.0, 6.0)], crs=4326
+    )
+    path = tmp_path / "KEN_ADM1.geojson"
+    gdf.to_file(path, driver="GeoJSON")
+
+    info = bnd.inspect(path)
+    assert info["bbox_ok"] is False
+
+
+def test_download_skips_valid_existing_file_without_network(tmp_path, monkeypatch):
+    """A complete existing download must short-circuit before any HTTP call."""
+    path = _synthetic_boundary(tmp_path, "KEN_ADM0", ["Kenya"], 1)
+
+    def _fail(*args, **kwargs):  # pragma: no cover - must never run
+        raise AssertionError("fetch_metadata must not be called on the skip path")
+
+    monkeypatch.setattr(bnd, "fetch_metadata", _fail)
+    result = bnd.download("KEN", "ADM0", dest=tmp_path, overwrite=False)
+    assert result == path
+    assert path.read_bytes()  # untouched

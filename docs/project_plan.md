@@ -10,7 +10,7 @@ Day 2 and will be defined as the build progresses — they are not invented
 here. Source of each row is noted; update this file when a day is planned or
 completed.
 
-**Build days so far:** Days 1–3 (all committed 2026-10-19).
+**Build days so far:** Days 1–4 committed (2026-10-19); Day 5 in flight.
 
 ## Phase 0 — Foundations (Days 1–3)
 
@@ -24,8 +24,8 @@ completed.
 
 | Day | Task | Status | Source |
 |---|---|---|---|
-| 4 | Outage records and official notices (OUT-1…OUT-8); check free-tier depth of EskomSePush | ⬜ | inventory §C/§F/§G |
-| 5 | World Bank outage indicators; coverage check per pilot country; confirm they are context-only (no locality detail) | ⬜ | inventory §D/§F/§G |
+| 4 | Outage records and official notices (OUT-1…OUT-8) probed for all three pilots; free-tier depth checked (`reports/day04_outage_sources.md`). Follow-ups deferred to Day 10: KPLC Livewire notice list, kplc.project.co.ke archive depth, EPRA re-test from Colab | ✅ | inventory §C/§F/§G, day04 report |
+| 5 | World Bank outage indicators; coverage check per pilot country; confirm they are context-only (no locality detail) | 🔄 | inventory §D/§F/§G |
 | 6 | Fill licenses, dates, location detail, and limitations per source; build `reports/source_register.csv` (schema in inventory §H) | ⬜ | inventory §G/§H |
 | 7 | Data audit report; **go/no-go decision per source** (including fallback if public outage history is missing) | ⬜ | inventory §F/§G |
 
@@ -42,7 +42,8 @@ completed.
 
 | Day | Task | Status | Source |
 |---|---|---|---|
-| 12–15 | TBD | ❓ | — |
+| 12–14 | TBD | ❓ | — |
+| 15 | Formalise the per-country label design implied by the Day 4 investigation (ZAF dense national hourly target; NGA sparse national events; KEN planned-notice labels) | ⬜ | day04 report §1 |
 | 16 | Context/exposure layers (OSM power infrastructure, population at risk); weather feature refresh | ⬜ | inventory §B/§E |
 | 17 | Outage-record consolidation for label construction | ⬜ | inventory §C |
 | 18 | **Forecast leakage rule enforced:** only forecasts issued before the prediction cutoff may enter features | ⬜ | inventory §B |

@@ -17,4 +17,5 @@ geopandas==1.2.0
 shapely==2.2.0
 folium==0.20.0
 tabulate==0.10.0
-pypdf
+# Day 4+ — PDF outage-notice extraction (KPLC notices are image PDFs)
+pypdf==6.21.1

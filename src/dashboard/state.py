@@ -446,7 +446,9 @@ def eskom_load_reduction() -> pd.DataFrame:
     """Parse the Eskom hourly export into a timestamped load-reduction series.
 
     The raw export stores 12-hour clock times (``01:00:00 PM``) in hour-major
-    order; this returns a clean UTC-aware frame with one row per hour:
+    order; this returns a clean UTC-aware frame with one row per hour. The
+    source clock is South African local time (SAST, UTC+2, no DST), so every
+    timestamp is localised before conversion to UTC.
 
         time            tz-aware UTC timestamp
         mlr_mw          manual load reduction in MW (0 when none was applied)
@@ -469,6 +471,9 @@ def eskom_load_reduction() -> pd.DataFrame:
         format="%Y-%m-%d %I:%M:%S %p",
         errors="coerce",
     )
+    # The export is in South African local time (SAST, UTC+2, no DST).
+    # Normalise to tz-aware UTC before any analysis or display.
+    times = times.dt.tz_localize("Africa/Johannesburg").dt.tz_convert("UTC")
     frame = pd.DataFrame({
         "time": times,
         "mlr_mw": pd.to_numeric(raw.get("Manual Load_Reduction(MLR)"), errors="coerce"),

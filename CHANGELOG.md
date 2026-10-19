@@ -19,6 +19,18 @@ Dates are commit dates (build started 2026-10-19).
 - `.gitignore` extended with tooling/OS cache patterns (`.pytest_cache/`,
   coverage, mypy/ruff caches, `.DS_Store`, …).
 
+## Day 4 — 2026-10-19
+
+### Added
+
+- `reports/day04_outage_sources.md`: every outage/notice source (OUT-1…OUT-8)
+  probed for the three pilots with verdicts; South Africa's Eskom hourly MLR
+  record acquired (`data/raw/outages/zaf_eskom_hourly.sqlite`, 83 280 rows,
+  2017-04 → 2026-09) with a documented no-license-mirror provenance caveat.
+- `src/ingestion/outages.py` + `src/ingestion/utils.py`: outage intake with
+  `{source}_meta.json` provenance sidecars (source, license, URL, SHA-256)
+  and normalization to a common event schema; tests.
+
 ## Day 3 — 2026-10-19
 
 ### Added

@@ -26,7 +26,14 @@ Every acquisition writes its provenance next to the bytes:
 |---|---|---|
 | Administrative boundaries (Day 2) | `data/external/boundaries/{ISO3}_{ADM}_meta.json` | Verbatim geoBoundaries API metadata — `boundaryLicense`, `boundarySource`, `boundarySourceURL`, `boundaryYearRepresented`, `admUnitCount`, `gjDownloadURL` — plus `_api_url` and `_retrieved_utc` added by `src/ingestion/boundaries.py` |
 | Historical weather (Day 3) | `data/raw/weather/_manifest.json` | Requested URL and parameters (incl. `timezone=UTC`), `retrieved_utc`, HTTP status, byte count, **SHA-256** per file |
+| World Bank indicators (Day 5) | `data/raw/worldbank/_manifest.json` | Indicator code, requested URL and params, `retrieved_utc`, HTTP status, byte count |
+| Outage records (from Day 4) | `data/raw/outages/{source}_meta.json` sidecar written by `src/ingestion/outages.py` | Source, license (from the source's actual terms), URL, **SHA-256**; the loader *warns* on raw files missing a sidecar |
 | Scraped content (planned) | entry in the manifest/register | Source URL + retrieval timestamp (inventory §C) |
+
+The Day 4 Eskom-mirror intake predates the sidecar convention; its provenance
+(URL, row count, window, license caveat) is documented in
+`reports/day04_outage_sources.md` §3 and should get a sidecar when the intake
+is re-run.
 
 Machine-readable audits summarize these into `reports/dayNN_*.md`
 (currently `day02_boundaries_audit.md`; generated — do not hand-edit).
@@ -65,10 +72,26 @@ Open-Meteo Historical Archive (ERA5/ERA5-Land): nine pilot cities, hourly,
 <https://open-meteo.com/en/terms>; marked *verify* in the inventory — must be
 re-read before publishing derived data or any commercial use.
 
+### Acquired (Day 4, partial) — outage records
+
+| Data | License status | Note |
+|---|---|---|
+| South Africa: Eskom hourly grid metrics incl. Manual Load Reduction — `data/raw/outages/zaf_eskom_hourly.sqlite` (83 280 rows, 2017-04 → 2026-09) via an unofficial Eskom mirror | ⚠️ **No license file in the mirror's repo**; underlying data is Eskom portal output (Eskom's website terms apply) | Portfolio/research use only; redistribution not assured — provenance caveat documented in `reports/day04_outage_sources.md` §3, re-check before publishing derived data |
+| Nigeria: grid-collapse incidents from NERC annual reports | Public (verify per report) | Extractable, not yet downloaded |
+| Kenya: KPLC planned-interruption notices | Government utility terms (verify) | Image-only PDFs — OCR required; history depth unverified (Day 10 follow-ups) |
+
+### Acquired (Day 5, in flight) — World Bank indicators
+
+Indicator JSON downloaded via the World Bank API for KEN/ZAF/NGA with
+`_manifest.json` provenance. License is **CC BY 4.0 per indicator (verify per
+indicator)** per inventory §D; usage remains national-context only — these
+indicators have **no locality detail** and may never serve as geolocated
+labels.
+
 ### Catalogued but not acquired — licenses NOT yet verified
 
-Everything in `reports/data_inventory.md` sections B–E (outage records,
-World Bank indicators, forecasts, context layers) is `CANDIDATE` or
+Everything else in `reports/data_inventory.md` sections B–E (weather
+forecasts, remaining outage/notice sources, context layers) is `CANDIDATE` or
 `TO VERIFY`. Rules:
 
 - License marked **verify** → read the terms *before* download, re-check
@@ -94,10 +117,13 @@ Weather coverage: three cities per country defined in `CITIES`
 (`src/ingestion/weather.py`) — Nairobi/Mombasa/Kisumu, Johannesburg/Cape
 Town/Durban, Lagos/Abuja/Kano — hourly from 2021-01-01, UTC.
 
-Known coverage gaps to document, not hide (inventory §F): no confirmed public
-machine-readable outage history for all three pilots (Day 7 go/no-go);
+Known coverage gaps to document, not hide (inventory §F; Day 4 interim
+answers in `reports/day04_outage_sources.md`): no public machine-readable
+outage history *at equal depth for all three pilots* — South Africa has a
+dense national hourly record (via a no-license mirror), Nigeria sparse
+national events, Kenya planned notices only; formal go/no-go still due Day 7.
 World Bank indicators have **no locality detail** (national context only);
-South Africa outage history may be limited by paid API tiers.
+South Africa EskomSePush history sits behind a gated/paid tier.
 
 ## 5. Time and label integrity
 

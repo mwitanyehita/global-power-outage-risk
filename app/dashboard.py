@@ -116,12 +116,16 @@ def cached_eskom_episodes():
 
 
 @st.cache_data(ttl=900, show_spinner=False)
-def cached_geojson(level: str, countries: tuple[str, ...], tolerance: float):
-    """Simplified boundary FeatureCollection for one ADM level."""
-    import geopandas as gpd
-    from shapely.geometry import mapping
+def cached_boundary_rings(level: str, countries: tuple[str, ...], tolerance: float):
+    """Simplified polygon outlines for one ADM level, grouped by country.
 
-    features = []
+    Returns ``{iso3: [(unit_name, [(lon, lat), ...]), ...]}``. Only exterior
+    rings are kept — interior holes add payload without adding information at
+    this zoom level, and the ring is rounded to 3 decimals (~100 m).
+    """
+    import geopandas as gpd
+
+    out: dict[str, list[tuple[str, list[tuple[float, float]]]]] = {}
     for iso3 in countries:
         path = S.BOUNDARY_DIR / f"{iso3}_{level}.geojson"
         if not path.exists():
@@ -133,20 +137,17 @@ def cached_geojson(level: str, countries: tuple[str, ...], tolerance: float):
             (c for c in ("shapeName", "shapeGroup", "name") if c in gdf.columns),
             None,
         )
+        rings = []
         for geom, row in zip(gdf.geometry, gdf.to_dict("records")):
             if geom is None or geom.is_empty:
                 continue
-            features.append({
-                "type": "Feature",
-                "id": iso3,
-                "properties": {
-                    "name": row.get(name_col, "?"),
-                    "country": iso3,
-                    "level": level,
-                },
-                "geometry": mapping(geom),
-            })
-    return {"type": "FeatureCollection", "features": features}
+            polys = list(geom.geoms) if geom.geom_type == "MultiPolygon" else [geom]
+            for poly in polys:
+                coords = [(round(x, 3), round(y, 3)) for x, y in poly.exterior.coords]
+                if len(coords) >= 3:
+                    rings.append((row.get(name_col, "?"), coords))
+        out[iso3] = rings
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -448,8 +449,8 @@ def render_pulse() -> None:
                 fig.update_layout(
                     height=460, margin=dict(l=0, r=0, t=10, b=0),
                     geo=dict(
-                        scope="africa", projection_type="mercator",
-                        lataxis_range=[-38, 16], lonaxis_range=[4, 44],
+                        projection_type="equirectangular",
+                        lataxis_range=[-37, 15], lonaxis_range=[3, 44],
                         showland=True, landcolor="rgba(30,41,59,0.65)",
                         showcountries=True, countrycolor="rgba(100,116,139,0.55)",
                         coastlinecolor="rgba(100,116,139,0.7)",
@@ -532,8 +533,8 @@ def render_pulse() -> None:
                             opacity=0.75,
                         ))
                     fig.update_layout(
-                        height=300, margin=dict(l=0, r=0, t=10, b=0),
-                        title="Daily mean precipitation",
+                        height=340, margin=dict(l=45, r=10, t=34, b=0),
+                        title="Daily total precipitation",
                         yaxis_title="mm", xaxis_title="", barmode="group",
                         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                         font=dict(color="#cbd5e1", size=11), showlegend=False,
@@ -664,27 +665,31 @@ def render_pulse() -> None:
     # =====================================================================
     with tabs[3]:
         tolerance = 0.05 if adm_level == "ADM2" else 0.01
-        geo = cached_geojson(adm_level, tuple(countries), tolerance)
+        rings_by_country = cached_boundary_rings(adm_level, tuple(countries), tolerance)
 
         b1, b2 = st.columns([1.4, 1])
         with b1:
             st.subheader(f"{adm_level} coverage")
-            if not geo["features"]:
+            if not rings_by_country:
                 st.info(f"No {adm_level} boundary files for the selected countries.")
             else:
+                palette = {"KEN": "#0ea5e9", "ZAF": "#22c55e", "NGA": "#f59e0b"}
                 fig = go.Figure()
-                fig.add_trace(go.Choropleth(
-                    locations=[f["id"] for f in geo["features"]],
-                    z=[0] * len(geo["features"]),
-                    geojson=geo, featureidkey="id",
-                    marker_line_color="rgba(148,163,184,0.5)", marker_line_width=0.5,
-                    colorscale=[[0, "#0ea5e9"], [1, "#0ea5e9"]],
-                    showscale=False,
-                    hovertemplate=(
-                        "%{properties.name}<br>%{properties.country} · "
-                        "%{properties.level}<extra></extra>"
-                    ),
-                ))
+                for iso3, rings in rings_by_country.items():
+                    xs, ys, labels = [], [], []
+                    for name, coords in rings:
+                        xs.extend([c[0] for c in coords] + [None])
+                        ys.extend([c[1] for c in coords] + [None])
+                        labels.extend([name] * (len(coords) + 1))
+                    fig.add_trace(go.Scattergeo(
+                        lon=xs, lat=ys, mode="lines",
+                        name=iso3,
+                        line=dict(width=1.1, color=palette.get(iso3, "#64748b")),
+                        text=labels,
+                        hovertemplate="%{text}<br>" + iso3 + " · " + adm_level
+                                      + "<extra></extra>",
+                        showlegend=True,
+                    ))
                 fig.add_trace(go.Scattergeo(
                     lon=[c["lon"] for c in S.PILOT_CITIES if c["country"] in countries],
                     lat=[c["lat"] for c in S.PILOT_CITIES if c["country"] in countries],
@@ -696,13 +701,15 @@ def render_pulse() -> None:
                 ))
                 fig.update_layout(
                     height=520, margin=dict(l=0, r=0, t=10, b=0),
-                    geo=dict(scope="africa", projection_type="mercator",
+                    geo=dict(projection_type="equirectangular",
+                             lataxis_range=[-37, 15], lonaxis_range=[3, 44],
                              showland=True, landcolor="rgba(30,41,59,0.65)",
                              showcountries=True,
                              countrycolor="rgba(100,116,139,0.5)",
                              coastlinecolor="rgba(100,116,139,0.7)",
                              bgcolor="rgba(0,0,0,0)"),
                     paper_bgcolor="rgba(0,0,0,0)",
+                    legend=dict(orientation="h", y=1.02),
                 )
                 st.plotly_chart(fig, width="stretch")
 
@@ -784,12 +791,19 @@ def render_pulse() -> None:
             entries = S.inventory_entries()
             if entries:
                 df = pd.DataFrame(entries)
+                df = df[["id", "status", "source", "section"]]
                 st.dataframe(
                     df.rename(columns={
-                        "section": "Section", "id": "ID", "source": "Source",
-                        "status": "Status",
+                        "id": "ID", "status": "Status", "source": "Source",
+                        "section": "Section",
                     }),
                     hide_index=True, width="stretch", height=420,
+                    column_config={
+                        "ID": st.column_config.TextColumn(width="small"),
+                        "Status": st.column_config.TextColumn(width="small"),
+                        "Source": st.column_config.TextColumn(width="medium"),
+                        "Section": st.column_config.TextColumn(width="medium"),
+                    },
                 )
                 st.caption(
                     "Statuses are the declared ones from reports/data_inventory.md. "

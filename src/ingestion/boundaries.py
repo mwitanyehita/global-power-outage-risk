@@ -14,6 +14,19 @@ Layout written to disk (all files are git-ignored reference data):
 Usage:
     python -m src.ingestion.boundaries               # pilots x ADM0/1/2
     python -m src.ingestion.boundaries --adm ADM1    # one level only
+
+Robustness guarantees:
+  * HTTP GETs retry with exponential backoff on 429/5xx/connection errors;
+    other 4xx fail fast (no pointless retries).
+  * Downloads are validated as a non-empty GeoJSON FeatureCollection before
+    being written atomically (temp file + rename) — an interrupted run never
+    leaves a truncated file under the final name.
+  * Re-runs are idempotent: valid existing files are skipped; a corrupt or
+    partial leftover is re-downloaded; a missing metadata sidecar next to a
+    valid geometry is restored without re-downloading the geometry.
+  * Failures on individual files don't abort the batch; they are collected
+    and reported, and the CLI exits non-zero.
+  * The metadata sidecar records a `_sha256` of the geometry bytes.
 """
 
 from __future__ import annotations
@@ -26,15 +39,23 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
-import requests
+
+# `requests` stays imported so callers/tests can monkeypatch the shared
+# requests module (utils.get_with_retries dispatches through it).
+import requests  # noqa: F401
 
 from src.config import DATA_EXTERNAL, REPORTS_DIR, ensure_dirs
+from src.ingestion import utils
 
 API_URL = "https://www.geoboundaries.org/api/current/gbOpen/{iso3}/{adm}/"
 PILOT_COUNTRIES = ("KEN", "ZAF", "NGA")
 DEFAULT_ADM_LEVELS = ("ADM0", "ADM1", "ADM2")
 
 BOUNDARY_DIR = DATA_EXTERNAL / "boundaries"
+
+# Failures from the most recent download_pilots() run (cleared at its start),
+# so main() can exit non-zero while still auditing whatever succeeded.
+download_failures: list[str] = []
 
 # Rough sanity bounds [min_lon, min_lat, max_lon, max_lat] per pilot country.
 # Used only to catch grossly wrong geometry, not for precision.
@@ -67,19 +88,39 @@ def _utc_now() -> str:
 def fetch_metadata(iso3: str, adm: str) -> dict:
     """Return the geoBoundaries API metadata for one country/level."""
     url = API_URL.format(iso3=iso3, adm=adm)
-    resp = requests.get(url, timeout=60)
-    resp.raise_for_status()
+    resp = utils.get_with_retries(url, timeout=utils.SMALL_TIMEOUT)
     meta = resp.json()
+    if not isinstance(meta, dict):
+        raise RuntimeError(f"Unexpected metadata payload for {iso3}/{adm}")
     meta["_retrieved_utc"] = _utc_now()
     meta["_api_url"] = url
     return meta
 
 
+def _looks_like_geojson(data: bytes) -> bool:
+    """Cheap structural check: bytes must parse as a GeoJSON object with features."""
+    try:
+        payload = json.loads(data)
+    except (ValueError, UnicodeDecodeError):
+        return False
+    return (
+        isinstance(payload, dict)
+        and payload.get("type") in {"FeatureCollection", "Feature"}
+        and isinstance(payload.get("features"), list)
+        and len(payload["features"]) > 0
+    )
+
+
 def download(iso3: str, adm: str, dest: Path | None = None, overwrite: bool = False) -> Path:
     """Download one boundary GeoJSON plus its metadata JSON.
 
-    The GeoJSON bytes are written verbatim from the response; the metadata
-    file records license, source, unit count and retrieval time.
+    The GeoJSON bytes are written verbatim from the response (atomically, so
+    an interrupted run never leaves a truncated file under the final name);
+    the metadata file records license, source, unit count, retrieval time and
+    a SHA-256 of the geometry file. An existing file is skipped only when it
+    parses as a non-empty FeatureCollection — a corrupt/partial leftover is
+    re-downloaded automatically. If the geometry is fine but its metadata
+    sidecar is missing, only the sidecar is (re)written.
     """
     dest = dest or BOUNDARY_DIR
     dest.mkdir(parents=True, exist_ok=True)
@@ -88,8 +129,18 @@ def download(iso3: str, adm: str, dest: Path | None = None, overwrite: bool = Fa
     meta_path = dest / f"{iso3}_{adm}_meta.json"
 
     if geojson_path.exists() and not overwrite:
-        print(f"  [skip] {geojson_path.name} already exists")
-        return geojson_path
+        existing = geojson_path.read_bytes()
+        if _looks_like_geojson(existing):
+            if not meta_path.exists():
+                # Self-heal: geometry is good but the sidecar went missing.
+                meta = fetch_metadata(iso3, adm)
+                meta["_sha256"] = utils.sha256_bytes(existing)
+                utils.write_json(meta_path, meta)
+                print(f"  [fix ] {meta_path.name} restored for existing {geojson_path.name}")
+                return geojson_path
+            print(f"  [skip] {geojson_path.name} already exists")
+            return geojson_path
+        print(f"  [warn] {geojson_path.name} is not valid GeoJSON — re-downloading")
 
     meta = fetch_metadata(iso3, adm)
     source_url = meta.get("gjDownloadURL")
@@ -97,11 +148,16 @@ def download(iso3: str, adm: str, dest: Path | None = None, overwrite: bool = Fa
         raise RuntimeError(f"No GeoJSON URL in metadata for {iso3}/{adm}: {meta}")
 
     print(f"  [get ] {iso3}_{adm}.geojson  <- {source_url}")
-    resp = requests.get(source_url, timeout=300)
-    resp.raise_for_status()
-    geojson_path.write_bytes(resp.content)
+    resp = utils.get_with_retries(source_url, timeout=utils.DEFAULT_TIMEOUT)
+    if not _looks_like_geojson(resp.content):
+        raise RuntimeError(
+            f"Downloaded bytes for {iso3}/{adm} are not a non-empty GeoJSON "
+            f"FeatureCollection ({len(resp.content)} bytes from {source_url})"
+        )
+    utils.write_bytes_atomic(geojson_path, resp.content)
 
-    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    meta["_sha256"] = utils.sha256_bytes(resp.content)
+    utils.write_json(meta_path, meta)
     return geojson_path
 
 
@@ -122,9 +178,15 @@ def inspect(path: Path) -> dict:
     """
     gdf = load(path)
 
-    iso3, adm = path.stem.split("_")
+    # Split on the first underscore only: works for "KEN_ADM1" and survives
+    # future variants like "KEN_ADM1_simplified".
+    iso3, adm = path.stem.split("_", 1)
     meta_path = path.with_name(f"{path.stem}_meta.json")
-    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
+    except (ValueError, OSError) as exc:
+        print(f"  [warn] unreadable metadata {meta_path.name}: {exc}", file=sys.stderr)
+        meta = {}
     meta_units = _as_int(meta.get("admUnitCount"))
     expected = EXPECTED_UNITS.get((iso3, adm))
 
@@ -176,13 +238,24 @@ def inspect(path: Path) -> dict:
 
 
 def download_pilots(levels: tuple[str, ...] = DEFAULT_ADM_LEVELS, overwrite: bool = False) -> list[Path]:
-    """Download every pilot-country boundary for the requested levels."""
+    """Download every pilot-country boundary for the requested levels.
+
+    A failure on one file (network error, bad payload) is reported and does
+    not stop the remaining downloads — the run stays resumable/idempotent:
+    re-running skips whatever already landed. ``download_failures`` records
+    what was skipped so ``main`` can exit non-zero.
+    """
     ensure_dirs()
     paths: list[Path] = []
+    download_failures.clear()
     for iso3 in PILOT_COUNTRIES:
         print(f"{iso3}:")
         for adm in levels:
-            paths.append(download(iso3, adm, overwrite=overwrite))
+            try:
+                paths.append(download(iso3, adm, overwrite=overwrite))
+            except (requests.RequestException, RuntimeError, OSError) as exc:
+                download_failures.append(f"{iso3}_{adm}: {exc}")
+                print(f"  [FAIL] {iso3}_{adm}: {exc}", file=sys.stderr)
     return paths
 
 
@@ -301,7 +374,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     paths = download_pilots(tuple(args.adm), overwrite=args.overwrite)
+    if not paths:
+        print("No boundary files downloaded.", file=sys.stderr)
+        return 1
     write_audit(paths)
+    if download_failures:
+        print(
+            f"{len(download_failures)} download(s) failed (re-run to retry): "
+            + "; ".join(download_failures),
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

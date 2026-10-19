@@ -1,0 +1,1255 @@
+{
+  "generated_utc": "2026-10-19T14:41:19+00:00",
+  "generator": "python -m src.ingestion.data_manifest",
+  "data_root": "/home/mwita/Data-Portfolio/global-power-outage-risk/data",
+  "file_count": 77,
+  "total_bytes": 259545454,
+  "files": [
+    {
+      "path": "raw/outages/kenya/kplc_customer_support.html",
+      "bytes": 634598,
+      "sha256": "74b6ca898c58ef3e01b9e4aad04d7568d5cd8a562fa696b2eec8a78bce292a2d",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_customer_support_p1.html",
+      "bytes": 634598,
+      "sha256": "74ea407920422c6940384c92180d8923db0d53f6ec4369880c43f4e3c70ab1c5",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_customer_support_p14.html",
+      "bytes": 628875,
+      "sha256": "217bedc01e88790e0a05cdb10a1ab12dddf40abc3187ef7640cd393df4ae42f0",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_customer_support_p15.html",
+      "bytes": 612669,
+      "sha256": "50bb97dffeb49397cc11d4885a2dfea8b28e66b1c9ed4350ef25ee508d12a89d",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-10-01.pdf",
+      "bytes": 363214,
+      "sha256": "dd79efd7e926ba3c14889370732b65b5a4e80b0c14002ec3dac4aa41b2944573",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_2026-10-16.pdf",
+      "bytes": 114635,
+      "sha256": "dd6068ff0f4661e0469532a3ef80a8e4bf166990e1d84310aa7de71dd77a1c54",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_notice_day4_sample_01K097.pdf",
+      "bytes": 482887,
+      "sha256": "f4d1790b65e11b97cd881cc5d20ff06b0c432d3d2dccaa50a802e1d985a6da9f",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_power_interruptions.html",
+      "bytes": 237197,
+      "sha256": "632dddd3bb114d71b720f677c6fc1d5d6fe64eecae1bf475f54e0d4694e31638",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_powerschedule_notices.json",
+      "bytes": 22944,
+      "sha256": "3a8b8b173868d1e9a42ceb2c6b5e9859a33d4f66be5922c94e66af86b350597b",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_robots.txt",
+      "bytes": 194,
+      "sha256": "f9bc888ad7c3918bd025221440fa8d291b02819046d08b658e697e6236bc7057",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/kplc_snapshot.json",
+      "bytes": 441,
+      "sha256": "f3f1830da60ac8666ca8593a919f6ea628cb94ddfc28e8123bcd8fbb2ddd56a6",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/livewire_effects_html.html",
+      "bytes": 53144,
+      "sha256": "85601052a2caa9542c12d14fe295736d122fc13992f3397129f0a96849c1cc80",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/livewire_notices.json",
+      "bytes": 1607,
+      "sha256": "656285e408c2759fedf8758fd79611021ab637655aea2c399728e06a8bd44924",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/livewire_powerschedule_goto10.html",
+      "bytes": 33051,
+      "sha256": "d19a38afcad2207a3d8881de5aaf8cb7c0fe9382d14ad00cdab5f6a8e75f2fce",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/livewire_powerschedule_goto10.txt",
+      "bytes": 34940,
+      "sha256": "2515e62a06f377d85d162223431b01f4dd2c338591727f44996e8c2741aefcc9",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/livewire_response_1_updates_searchsite.txt",
+      "bytes": 41,
+      "sha256": "bb434aa96fb54f3c2b11879dcf335d2597954065ced876919f2c66dc7c2e36e8",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/livewire_response_2_call_only.txt",
+      "bytes": 41,
+      "sha256": "bb434aa96fb54f3c2b11879dcf335d2597954065ced876919f2c66dc7c2e36e8",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/livewire_response_3_params_list.txt",
+      "bytes": 41,
+      "sha256": "bb434aa96fb54f3c2b11879dcf335d2597954065ced876919f2c66dc7c2e36e8",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/livewire_response_csrf_updates_searchsite.txt",
+      "bytes": 56989,
+      "sha256": "559d20e3580dc3df777ee967a0fbe172552bca10ed28cf56c1019a0e8e4bce6e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2023-07-04.html",
+      "bytes": 13568,
+      "sha256": "699bc1e4c61abbc50e841567afd1d518349dfb00ca388c285d5f8dd952e9ebc7",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2023-10-27.html",
+      "bytes": 13975,
+      "sha256": "5c4efb0344165d3756481e0d6bb044d415452b95568e8cd04476329b965a6d47",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2023-11-18.html",
+      "bytes": 18187,
+      "sha256": "dafcbfbaae829c555efe380ca2e73bc0eb0f517f2dc2ef907b8f46c9602a3002",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2023-12-07.html",
+      "bytes": 25294,
+      "sha256": "aee340f5454373bc9eee5724b09954f322cf5c1501b3229fc90601fff6d4e81e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2024-01-11.html",
+      "bytes": 19260,
+      "sha256": "818eb286a56469350fc4ba5e1bcde14a492dcbfd78f3ce03715c3c781dff144a",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2026-04-09.html",
+      "bytes": 30395,
+      "sha256": "e4742544fa48d5afb6461fbf45821efa78752473ec585a352c785a001ec3f36e",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2026-06-17.html",
+      "bytes": 18803,
+      "sha256": "98dada92c81cf98454ed991e5a5587655bae2161d83ef2cd1caa1e194db4d635",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2026-10-04.html",
+      "bytes": 23032,
+      "sha256": "45afb1d2945fd32ec25dab8289e863a7c41cf598b15d4e5ed492f06a1736beaf",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2026-10-10.html",
+      "bytes": 14989,
+      "sha256": "b875defaa12acb1604655de1e67fc2f83e992d54ce456b6db740ba7cc1929061",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2026-10-19.html",
+      "bytes": 23989,
+      "sha256": "7d1e3fd80a37189d3d2c69642c8782fbe07e3c96e5eab4266ee970d96a862fd6",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2026-10-22.html",
+      "bytes": 33673,
+      "sha256": "b083eb609b0a7d31897e59453065f1f5706e6ebb8e364be79df2d837c589ad7c",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2026-10-23.html",
+      "bytes": 23115,
+      "sha256": "2898542df74c4cef20aac5852c09f19c2c1bf8a4e79fc803f77e56600386f09a",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_date_2026-10-24.html",
+      "bytes": 14757,
+      "sha256": "89aba3455cda598f1008421671d4247232da012cc434fe0e069dfae39e9cd89c",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_home.html",
+      "bytes": 96276,
+      "sha256": "940813cf56bb9abd3aec58b6f4ac192fb3c9d3330998c7ce9d57de329112822d",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_notices.json",
+      "bytes": 48304,
+      "sha256": "b573b5c46249172a0ebae3c54d0fc0ba4326d5048a8290afa0e1eb08f1ffd9aa",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_robots.txt",
+      "bytes": 208,
+      "sha256": "caba5bdacd193c22124c9efa4e37fc1c12d2950ca6f9fcf220fab86a60f1fcdc",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/kenya/project_co_ke_sitemap.xml",
+      "bytes": 4287645,
+      "sha256": "f40d75e5ae1a70fdaceace5ecdcd7388a87e893a2a3d2caba16e65511912c04b",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/nerc/2020_annual_report.pdf",
+      "bytes": 6207945,
+      "sha256": "e7138ea658efd9893bd48e1a809ce37c5c935427599b61166dc6c253a7a201fa",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/nerc/2022_annual_report.pdf",
+      "bytes": 3862406,
+      "sha256": "69fd0a3a8173558910bfd90adc7ae4ad55b5cd306a38507b90a00c9dc5adc39c",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/nerc/2023_annual_report.pdf",
+      "bytes": 5497564,
+      "sha256": "fb567598d05b2a3b4b8189756d02cf9928a427b6dad92bf5b89453b1aa0308ad",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/nerc/2024_annual_report.pdf",
+      "bytes": 9647792,
+      "sha256": "4c64ef7a15464df202b1911fdc6c978e7b660349bc7c773c08d674cc2a2382af",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/nerc/2025_annual_report.pdf",
+      "bytes": 11056338,
+      "sha256": "87a9c162f2fa07d7fa31a67da9796bf9e29740e6271b037360a196324e41c438",
+      "provenance": null
+    },
+    {
+      "path": "raw/outages/nerc/events_extracted.csv",
+      "bytes": 1308,
+      "sha256": "e9bc10367ca6b5e1a2b5065502007f422981bdf312698cd60c130b0e23dfc83a",
+      "provenance": {
+        "source": "Nigerian Electricity Regulatory Commission (NERC) — Annual Report & Accounts",
+        "retrieved_utc": "2026-10-19T14:30:16+00:00",
+        "downloads": [
+          {
+            "report_year": 2020,
+            "url": "https://nerc.gov.ng/wp-content/uploads/2022/08/Annual_Report_2020_Final%20edit.pdf",
+            "file": "2020_annual_report.pdf"
+          },
+          {
+            "report_year": 2022,
+            "url": "https://nerc.gov.ng/wp-content/uploads/2025/09/2022_Annual_Report.pdf",
+            "file": "2022_annual_report.pdf"
+          },
+          {
+            "report_year": 2023,
+            "url": "https://nerc.gov.ng/wp-content/uploads/2024/09/2023_Annual_Report.pdf",
+            "file": "2023_annual_report.pdf"
+          },
+          {
+            "report_year": 2024,
+            "url": "https://nerc.gov.ng/wp-content/uploads/2025/07/2024-Annual-Report-1.pdf",
+            "file": "2024_annual_report.pdf"
+          },
+          {
+            "report_year": 2025,
+            "url": "https://nerc.gov.ng/wp-content/uploads/2026/08/2025-Annual-Report_Pub.pdf",
+            "file": "2025_annual_report.pdf"
+          }
+        ],
+        "image_only_pdfs": [],
+        "events": 14,
+        "columns": [
+          "event_date",
+          "event_time",
+          "event_type",
+          "restoration_time",
+          "country_iso3",
+          "source_document",
+          "source_page",
+          "extracted_utc"
+        ]
+      }
+    },
+    {
+      "path": "raw/outages/zaf_eskom_hourly.sqlite",
+      "bytes": 42070016,
+      "sha256": "e83e6449c47ce905fd44448fbde560b272263c184b5a34d82db65a50d874a4c3",
+      "provenance": null
+    },
+    {
+      "path": "raw/weather/KEN_kisumu.json",
+      "bytes": 2907956,
+      "sha256": "6faaa8a165d49b7bb5c7ce4d68dc41818f4c851600629438d3065cc0b1c1c1b5",
+      "provenance": {
+        "city": "Kisumu",
+        "country": "KEN",
+        "latitude": -0.0917,
+        "longitude": 34.768,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "-0.0917",
+          "longitude": "34.768",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:03:16+00:00",
+        "http_status": 200,
+        "bytes": 2907956,
+        "sha256": "6faaa8a165d49b7bb5c7ce4d68dc41818f4c851600629438d3065cc0b1c1c1b5"
+      }
+    },
+    {
+      "path": "raw/weather/KEN_mombasa.json",
+      "bytes": 3005016,
+      "sha256": "bf97ed9525e3d8e035eda86b73d9ef73ed8d80ea1afca627a708721b7f4e25ed",
+      "provenance": {
+        "city": "Mombasa",
+        "country": "KEN",
+        "latitude": -4.043,
+        "longitude": 39.665,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "-4.043",
+          "longitude": "39.665",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:03:06+00:00",
+        "http_status": 200,
+        "bytes": 3005016,
+        "sha256": "bf97ed9525e3d8e035eda86b73d9ef73ed8d80ea1afca627a708721b7f4e25ed"
+      }
+    },
+    {
+      "path": "raw/weather/KEN_nairobi.json",
+      "bytes": 2928530,
+      "sha256": "8d86798e4893ed8ebd3d5c84928fe474579948222bd3bbb3b1058333e3235280",
+      "provenance": {
+        "city": "Nairobi",
+        "country": "KEN",
+        "latitude": -1.292,
+        "longitude": 36.822,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "-1.292",
+          "longitude": "36.822",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:03:00+00:00",
+        "http_status": 200,
+        "bytes": 2928530,
+        "sha256": "8d86798e4893ed8ebd3d5c84928fe474579948222bd3bbb3b1058333e3235280"
+      }
+    },
+    {
+      "path": "raw/weather/NGA_abuja.json",
+      "bytes": 2911805,
+      "sha256": "cf61860be0891da4a86e95c6080a1e74d3f2f4e0eebb7b0f54e9d1609ab3998a",
+      "provenance": {
+        "city": "Abuja",
+        "country": "NGA",
+        "latitude": 9.058,
+        "longitude": 7.495,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "9.058",
+          "longitude": "7.495",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:04:44+00:00",
+        "http_status": 200,
+        "bytes": 2911805,
+        "sha256": "cf61860be0891da4a86e95c6080a1e74d3f2f4e0eebb7b0f54e9d1609ab3998a"
+      }
+    },
+    {
+      "path": "raw/weather/NGA_kano.json",
+      "bytes": 2917577,
+      "sha256": "9e417e5d537625b88e1c65d3dd1b5da50d328959cf7fdb54b1a012b873289d42",
+      "provenance": {
+        "city": "Kano",
+        "country": "NGA",
+        "latitude": 12.002,
+        "longitude": 8.592,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "12.002",
+          "longitude": "8.592",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:04:53+00:00",
+        "http_status": 200,
+        "bytes": 2917577,
+        "sha256": "9e417e5d537625b88e1c65d3dd1b5da50d328959cf7fdb54b1a012b873289d42"
+      }
+    },
+    {
+      "path": "raw/weather/NGA_lagos.json",
+      "bytes": 2996628,
+      "sha256": "5537d056a63d5f37cd4e39966ef3cef28bf3ff9716795a58698fc834d866b570",
+      "provenance": {
+        "city": "Lagos",
+        "country": "NGA",
+        "latitude": 6.524,
+        "longitude": 3.379,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "6.524",
+          "longitude": "3.379",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:03:37+00:00",
+        "http_status": 200,
+        "bytes": 2996628,
+        "sha256": "5537d056a63d5f37cd4e39966ef3cef28bf3ff9716795a58698fc834d866b570"
+      }
+    },
+    {
+      "path": "raw/weather/ZAF_cape-town.json",
+      "bytes": 2977138,
+      "sha256": "c559e13c99601b28e154655143daaa2583f8c8386be11747f5ff94c1022f2446",
+      "provenance": {
+        "city": "Cape Town",
+        "country": "ZAF",
+        "latitude": -33.925,
+        "longitude": 18.424,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "-33.925",
+          "longitude": "18.424",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:03:23+00:00",
+        "http_status": 200,
+        "bytes": 2977138,
+        "sha256": "c559e13c99601b28e154655143daaa2583f8c8386be11747f5ff94c1022f2446"
+      }
+    },
+    {
+      "path": "raw/weather/ZAF_durban.json",
+      "bytes": 2977093,
+      "sha256": "fbbde72510acd2f04851fc027d945cf2f37222c92f8ec46a9fb9d835b8f8f04b",
+      "provenance": {
+        "city": "Durban",
+        "country": "ZAF",
+        "latitude": -29.859,
+        "longitude": 31.021,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "-29.859",
+          "longitude": "31.021",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:03:31+00:00",
+        "http_status": 200,
+        "bytes": 2977093,
+        "sha256": "fbbde72510acd2f04851fc027d945cf2f37222c92f8ec46a9fb9d835b8f8f04b"
+      }
+    },
+    {
+      "path": "raw/weather/ZAF_johannesburg.json",
+      "bytes": 2899575,
+      "sha256": "34846faa93a753b3a6a94691158805e02fcb17cda9d09e74b5638e19d4b2abb7",
+      "provenance": {
+        "city": "Johannesburg",
+        "country": "ZAF",
+        "latitude": -26.204,
+        "longitude": 28.047,
+        "requested_url": "https://archive-api.open-meteo.com/v1/archive",
+        "requested_params": {
+          "latitude": "-26.204",
+          "longitude": "28.047",
+          "start_date": "2021-01-01",
+          "end_date": "2026-10-18",
+          "hourly": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,surface_pressure",
+          "timezone": "UTC"
+        },
+        "retrieved_utc": "2026-10-19T13:03:19+00:00",
+        "http_status": 200,
+        "bytes": 2899575,
+        "sha256": "34846faa93a753b3a6a94691158805e02fcb17cda9d09e74b5638e19d4b2abb7"
+      }
+    },
+    {
+      "path": "raw/worldbank/EG.ELC.ACCS.RU.ZS.json",
+      "bytes": 18325,
+      "sha256": "7d3d99e9363d2613a44333b1538c95ecfedd6fb46596e8e3bb743aa33d1a06ce",
+      "provenance": {
+        "indicator": "EG.ELC.ACCS.RU.ZS",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/EG.ELC.ACCS.RU.ZS",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:44:18+00:00",
+        "http_status": 200,
+        "bytes": 18325
+      }
+    },
+    {
+      "path": "raw/worldbank/EG.ELC.ACCS.UR.ZS.json",
+      "bytes": 18325,
+      "sha256": "fe3dbb5cad655ee94f5cdf3b20dcdbcb32ccfe7c7e348191232a1698090ea8d0",
+      "provenance": {
+        "indicator": "EG.ELC.ACCS.UR.ZS",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/EG.ELC.ACCS.UR.ZS",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:44:25+00:00",
+        "http_status": 200,
+        "bytes": 18325
+      }
+    },
+    {
+      "path": "raw/worldbank/EG.ELC.ACCS.ZS.json",
+      "bytes": 17073,
+      "sha256": "ed5acb07c047811e9b61bf26b442eb44d582bf2d2283606e1cc7aa1a599bd112",
+      "provenance": {
+        "indicator": "EG.ELC.ACCS.ZS",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/EG.ELC.ACCS.ZS",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:41:33+00:00",
+        "http_status": 200,
+        "bytes": 17073
+      }
+    },
+    {
+      "path": "raw/worldbank/EG.USE.ELEC.KH.PC.json",
+      "bytes": 18538,
+      "sha256": "fcbac0de81f2f7117f5298289c685bf56feba8a23944320aa36ea8c69231fcd4",
+      "provenance": {
+        "indicator": "EG.USE.ELEC.KH.PC",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/EG.USE.ELEC.KH.PC",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:41:40+00:00",
+        "http_status": 200,
+        "bytes": 18538
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.ELC.OUTG.DY.json",
+      "bytes": 128,
+      "sha256": "531cfc2a89937bfd09e7b2a4aeac3a5c55b79767ee4dd60ae770fd3629115f38",
+      "provenance": {
+        "indicator": "IC.ELC.OUTG.DY",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.ELC.OUTG.DY",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:40:01+00:00",
+        "http_status": 200,
+        "bytes": 128
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.ELC.OUTG.HR.json",
+      "bytes": 8593,
+      "sha256": "933434b33b6dae5c6e1b70c0bd0de486421cffed6849c7738ad909a178741636",
+      "provenance": {
+        "indicator": "IC.ELC.OUTG.HR",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.ELC.OUTG.HR",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:40:06+00:00",
+        "http_status": 200,
+        "bytes": 8593
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.ELC.OUTG.ZS.json",
+      "bytes": 18018,
+      "sha256": "4f129f6927a7b52831e378cea259d06190df4e5adef78ecbec6d4e02111e1eaa",
+      "provenance": {
+        "indicator": "IC.ELC.OUTG.ZS",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.ELC.OUTG.ZS",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:38:18+00:00",
+        "http_status": 200,
+        "bytes": 18018
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.ELC.OUTG.json",
+      "bytes": 128,
+      "sha256": "531cfc2a89937bfd09e7b2a4aeac3a5c55b79767ee4dd60ae770fd3629115f38",
+      "provenance": {
+        "indicator": "IC.ELC.OUTG",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.ELC.OUTG",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:38:20+00:00",
+        "http_status": 200,
+        "bytes": 128
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.ELC.SAID.XD.DB1619.json",
+      "bytes": 14329,
+      "sha256": "980d3f43937edc0a42fc077232d84936b039138c92cce40e83a70990d3dc642f",
+      "provenance": {
+        "indicator": "IC.ELC.SAID.XD.DB1619",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.ELC.SAID.XD.DB1619",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:40:14+00:00",
+        "http_status": 200,
+        "bytes": 14329
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.FRM.INFRA.IN16.json",
+      "bytes": 10444,
+      "sha256": "888d4f7b96d2221c182e50677dfe21ee0410046fe71b70b8d7542d107d245c83",
+      "provenance": {
+        "indicator": "IC.FRM.INFRA.IN16",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.FRM.INFRA.IN16",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:38:09+00:00",
+        "http_status": 200,
+        "bytes": 10444
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.FRM.INFRA.IN2.json",
+      "bytes": 10350,
+      "sha256": "bc5ded3e3e2a461f4e23db8f0c5c2257cc0cd80795c113b97788c35baf9264d6",
+      "provenance": {
+        "indicator": "IC.FRM.INFRA.IN2",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.FRM.INFRA.IN2",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:38:11+00:00",
+        "http_status": 200,
+        "bytes": 10350
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.FRM.INFRA.IN3_C.json",
+      "bytes": 11834,
+      "sha256": "f08eb81a8211725ff0df1a92d29fcd9a05d09eb21ce90ea8033d1190ae3cd5e1",
+      "provenance": {
+        "indicator": "IC.FRM.INFRA.IN3_C",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.FRM.INFRA.IN3_C",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:38:12+00:00",
+        "http_status": 200,
+        "bytes": 11834
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.FRM.INFRA.IN4_C.json",
+      "bytes": 12057,
+      "sha256": "31b040c0a0a52a5fd5bb90d71f84ca70432821f3e05507e0b14eb225e90cd9ae",
+      "provenance": {
+        "indicator": "IC.FRM.INFRA.IN4_C",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.FRM.INFRA.IN4_C",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:38:14+00:00",
+        "http_status": 200,
+        "bytes": 12057
+      }
+    },
+    {
+      "path": "raw/worldbank/IC.FRM.OUTG.ZS.json",
+      "bytes": 19332,
+      "sha256": "28504693a8e967d6416c28a27449f18c38ccdf438025c35cdd2f9048a0426321",
+      "provenance": {
+        "indicator": "IC.FRM.OUTG.ZS",
+        "requested_url": "https://api.worldbank.org/v2/country/KEN;ZAF;NGA/indicator/IC.FRM.OUTG.ZS",
+        "requested_params": {
+          "format": "json",
+          "per_page": "1000",
+          "date": "2000:2026"
+        },
+        "retrieved_utc": "2026-10-19T13:38:15+00:00",
+        "http_status": 200,
+        "bytes": 19332
+      }
+    },
+    {
+      "path": "processed/unit_registry.csv",
+      "bytes": 127865,
+      "sha256": "b9a0884697b88fbf932ac8c058558f82ba670564fed146c7c1837494025d670e",
+      "provenance": null
+    },
+    {
+      "path": "processed/weather_hourly.csv",
+      "bytes": 48211227,
+      "sha256": "fd753e3184dbd610849620ac20901dc37d347d97651f3b6062de0f6808d50868",
+      "provenance": {
+        "generated_utc": "2026-10-19T14:40:58+00:00",
+        "source": "Open-Meteo Historical Archive (ERA5/ERA5-Land)",
+        "source_url": "https://open-meteo.com/en/docs/historical-weather-api",
+        "terms": "https://open-meteo.com/en/terms",
+        "inputs": [
+          {
+            "raw_file": "KEN_kisumu.json",
+            "city": "Kisumu",
+            "sha256": "6faaa8a165d49b7bb5c7ce4d68dc41818f4c851600629438d3065cc0b1c1c1b5",
+            "bytes": 2907956
+          },
+          {
+            "raw_file": "KEN_mombasa.json",
+            "city": "Mombasa",
+            "sha256": "bf97ed9525e3d8e035eda86b73d9ef73ed8d80ea1afca627a708721b7f4e25ed",
+            "bytes": 3005016
+          },
+          {
+            "raw_file": "KEN_nairobi.json",
+            "city": "Nairobi",
+            "sha256": "8d86798e4893ed8ebd3d5c84928fe474579948222bd3bbb3b1058333e3235280",
+            "bytes": 2928530
+          },
+          {
+            "raw_file": "NGA_abuja.json",
+            "city": "Abuja",
+            "sha256": "cf61860be0891da4a86e95c6080a1e74d3f2f4e0eebb7b0f54e9d1609ab3998a",
+            "bytes": 2911805
+          },
+          {
+            "raw_file": "NGA_kano.json",
+            "city": "Kano",
+            "sha256": "9e417e5d537625b88e1c65d3dd1b5da50d328959cf7fdb54b1a012b873289d42",
+            "bytes": 2917577
+          },
+          {
+            "raw_file": "NGA_lagos.json",
+            "city": "Lagos",
+            "sha256": "5537d056a63d5f37cd4e39966ef3cef28bf3ff9716795a58698fc834d866b570",
+            "bytes": 2996628
+          },
+          {
+            "raw_file": "ZAF_cape-town.json",
+            "city": "Cape Town",
+            "sha256": "c559e13c99601b28e154655143daaa2583f8c8386be11747f5ff94c1022f2446",
+            "bytes": 2977138
+          },
+          {
+            "raw_file": "ZAF_durban.json",
+            "city": "Durban",
+            "sha256": "fbbde72510acd2f04851fc027d945cf2f37222c92f8ec46a9fb9d835b8f8f04b",
+            "bytes": 2977093
+          },
+          {
+            "raw_file": "ZAF_johannesburg.json",
+            "city": "Johannesburg",
+            "sha256": "34846faa93a753b3a6a94691158805e02fcb17cda9d09e74b5638e19d4b2abb7",
+            "bytes": 2899575
+          }
+        ],
+        "rows": 457272,
+        "columns": [
+          "time_utc",
+          "city",
+          "country_iso3",
+          "latitude",
+          "longitude",
+          "temperature_2m",
+          "relative_humidity_2m",
+          "precipitation",
+          "rain",
+          "weather_code",
+          "cloud_cover",
+          "wind_speed_10m",
+          "wind_gusts_10m",
+          "surface_pressure",
+          "raw_file"
+        ],
+        "window_start": "2021-01-01 00:00:00+00:00",
+        "window_end": "2026-10-18 23:00:00+00:00",
+        "validation": {
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "counts": {
+            "rows": 457272,
+            "cities": 9,
+            "by_country": {
+              "NGA": 152424,
+              "ZAF": 152424,
+              "KEN": 152424
+            },
+            "hours_per_city": {
+              "Abuja": 50808,
+              "Cape Town": 50808,
+              "Durban": 50808,
+              "Johannesburg": 50808,
+              "Kano": 50808,
+              "Kisumu": 50808,
+              "Lagos": 50808,
+              "Mombasa": 50808,
+              "Nairobi": 50808
+            },
+            "null_cells": 0,
+            "out_of_range_cells": 0,
+            "grid_alignment": true,
+            "window_start": "2021-01-01 00:00:00+00:00",
+            "window_end": "2026-10-18 23:00:00+00:00"
+          }
+        }
+      }
+    },
+    {
+      "path": "external/boundaries/KEN_ADM0.geojson",
+      "bytes": 1333814,
+      "sha256": "89248c71d10e86d76a2ca336aa2444aac9901651c9cdb974a83f29fbb72c55fa",
+      "provenance": {
+        "boundaryID": "KEN-ADM0-21065076",
+        "boundaryName": "Kenya",
+        "boundaryISO": "KEN",
+        "boundaryYearRepresented": "2020",
+        "boundaryType": "ADM0",
+        "boundaryCanonical": "Republic of Kenya",
+        "boundarySource": "RCMRD GeoPortal, geoBoundaries",
+        "boundaryLicense": "Public Domain",
+        "licenseDetail": "nan",
+        "licenseSource": "rcmrd.africageoportal.com/datasets/africageoportal",
+        "boundarySourceURL": "rcmrd.africageoportal.com/datasets/africageoportal",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Eastern Africa",
+        "worldBankIncomeGroup": "Lower-middle-income Countries",
+        "admUnitCount": "1",
+        "meanVertices": "30581.0",
+        "minVertices": "30581",
+        "maxVertices": "30581",
+        "meanPerimeterLengthKM": "5536.641335689762",
+        "minPerimeterLengthKM": "5536.641335689762",
+        "maxPerimeterLengthKM": "5536.641335689762",
+        "meanAreaSqKM": "590897.8133124034",
+        "minAreaSqKM": "590897.8133124034",
+        "maxAreaSqKM": "590897.8133124034",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM0/geoBoundaries-KEN-ADM0-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM0/geoBoundaries-KEN-ADM0.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM0/geoBoundaries-KEN-ADM0.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM0/geoBoundaries-KEN-ADM0-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM0/geoBoundaries-KEN-ADM0_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:51:28+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/KEN/ADM0/"
+      }
+    },
+    {
+      "path": "external/boundaries/KEN_ADM1.geojson",
+      "bytes": 7956137,
+      "sha256": "a3e073594494eb740e42fadec63acda982f6a745bb64ee4aa152453ccc46f94e",
+      "provenance": {
+        "boundaryID": "KEN-ADM1-32016919",
+        "boundaryName": "Kenya",
+        "boundaryISO": "KEN",
+        "boundaryYearRepresented": "2020",
+        "boundaryType": "ADM1",
+        "boundaryCanonical": "Counties",
+        "boundarySource": "RCMRD GeoPortal, Africa GeoPortal",
+        "boundaryLicense": "Public Domain",
+        "licenseDetail": "nan",
+        "licenseSource": "rcmrd.africageoportal.com/datasets/africageoportal",
+        "boundarySourceURL": "rcmrd.africageoportal.com/datasets/africageoportal",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Eastern Africa",
+        "worldBankIncomeGroup": "Lower-middle-income Countries",
+        "admUnitCount": "47",
+        "meanVertices": "3897.0",
+        "minVertices": "555",
+        "maxVertices": "12302",
+        "meanPerimeterLengthKM": "583.9524686524665",
+        "minPerimeterLengthKM": "151.90393606754756",
+        "maxPerimeterLengthKM": "1675.0063100040054",
+        "meanAreaSqKM": "12572.304483011549",
+        "minAreaSqKM": "226.4819538269366",
+        "maxAreaSqKM": "75925.18087289555",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM1/geoBoundaries-KEN-ADM1-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM1/geoBoundaries-KEN-ADM1.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM1/geoBoundaries-KEN-ADM1.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM1/geoBoundaries-KEN-ADM1-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM1/geoBoundaries-KEN-ADM1_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:49:54+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/KEN/ADM1/"
+      }
+    },
+    {
+      "path": "external/boundaries/KEN_ADM2.geojson",
+      "bytes": 10884536,
+      "sha256": "af9fd77ad3df64f3efbbea350b8664e5191cb5381cf7eea247507ac2c906bc24",
+      "provenance": {
+        "boundaryID": "KEN-ADM2-3690345",
+        "boundaryName": "Kenya",
+        "boundaryISO": "KEN",
+        "boundaryYearRepresented": "2020",
+        "boundaryType": "ADM2",
+        "boundaryCanonical": "Sub-Counties",
+        "boundarySource": "IEBC, OCHA ROSEA",
+        "boundaryLicense": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+        "licenseDetail": "nan",
+        "licenseSource": "data.humdata.org/dataset/ken-administrative-boundaries",
+        "boundarySourceURL": "data.humdata.org/dataset/ken-administrative-boundaries",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Eastern Africa",
+        "worldBankIncomeGroup": "Lower-middle-income Countries",
+        "admUnitCount": "290",
+        "meanVertices": "861.0",
+        "minVertices": "35",
+        "maxVertices": "5241",
+        "meanPerimeterLengthKM": "202.5083450782187",
+        "minPerimeterLengthKM": "12.102256111738525",
+        "maxPerimeterLengthKM": "1033.910033651395",
+        "meanAreaSqKM": "2039.914617052316",
+        "minAreaSqKM": "2.9028357640515274",
+        "maxAreaSqKM": "40557.27319192823",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM2/geoBoundaries-KEN-ADM2-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM2/geoBoundaries-KEN-ADM2.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM2/geoBoundaries-KEN-ADM2.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM2/geoBoundaries-KEN-ADM2-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/KEN/ADM2/geoBoundaries-KEN-ADM2_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:51:33+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/KEN/ADM2/"
+      }
+    },
+    {
+      "path": "external/boundaries/NGA_ADM0.geojson",
+      "bytes": 311600,
+      "sha256": "cb2407fde9f81c67a3637fbc13bd1c7bcfe20c469eba77148b3e4895ee33acaa",
+      "provenance": {
+        "boundaryID": "NGA-ADM0-39225661",
+        "boundaryName": "Nigeria",
+        "boundaryISO": "NGA",
+        "boundaryYearRepresented": "2022",
+        "boundaryType": "ADM0",
+        "boundaryCanonical": "the Federal Republic of Nigeria",
+        "boundarySource": "GRID3",
+        "boundaryLicense": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+        "licenseDetail": "nan",
+        "licenseSource": "data.grid3.org/datasets/grid3-nigeria-state-boundaries/explore?location=8.992006%2C8.685290%2C6.82",
+        "boundarySourceURL": "data.grid3.org/datasets/grid3-nigeria-state-boundaries/explore?location=8.992006%2C8.685290%2C6.82",
+        "sourceDataUpdateDate": "Sun Feb 26 12:23:59 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Western Africa",
+        "worldBankIncomeGroup": "Lower-middle-income Countries",
+        "admUnitCount": "1",
+        "meanVertices": "7205.0",
+        "minVertices": "7205",
+        "maxVertices": "7205",
+        "meanPerimeterLengthKM": "5431.17511685647",
+        "minPerimeterLengthKM": "5431.17511685647",
+        "maxPerimeterLengthKM": "5431.17511685647",
+        "meanAreaSqKM": "912722.2421203956",
+        "minAreaSqKM": "912722.2421203956",
+        "maxAreaSqKM": "912722.2421203956",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM0/geoBoundaries-NGA-ADM0-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM0/geoBoundaries-NGA-ADM0.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM0/geoBoundaries-NGA-ADM0.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM0/geoBoundaries-NGA-ADM0-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM0/geoBoundaries-NGA-ADM0_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:52:52+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/NGA/ADM0/"
+      }
+    },
+    {
+      "path": "external/boundaries/NGA_ADM1.geojson",
+      "bytes": 2289696,
+      "sha256": "64fa218ac3d453cc1e66412ff461c5dfa1a4a1ade0da93b239a9891b587d28f9",
+      "provenance": {
+        "boundaryID": "NGA-ADM1-27671186",
+        "boundaryName": "Nigeria",
+        "boundaryISO": "NGA",
+        "boundaryYearRepresented": "2022",
+        "boundaryType": "ADM1",
+        "boundaryCanonical": "State",
+        "boundarySource": "GRID3",
+        "boundaryLicense": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+        "licenseDetail": "nan",
+        "licenseSource": "data.grid3.org/datasets/grid3-nigeria-state-boundaries/explore?location=8.992006%2C8.685290%2C6.82",
+        "boundarySourceURL": "data.grid3.org/datasets/grid3-nigeria-state-boundaries/explore?location=8.992006%2C8.685290%2C6.82",
+        "sourceDataUpdateDate": "Sun Feb 26 12:26:14 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Western Africa",
+        "worldBankIncomeGroup": "Lower-middle-income Countries",
+        "admUnitCount": "37",
+        "meanVertices": "1453.0",
+        "minVertices": "125",
+        "maxVertices": "6716",
+        "meanPerimeterLengthKM": "981.5494278783524",
+        "minPerimeterLengthKM": "311.0605998737737",
+        "maxPerimeterLengthKM": "2103.6999851507285",
+        "meanAreaSqKM": "24668.1687059566",
+        "minAreaSqKM": "3762.6170922909178",
+        "maxAreaSqKM": "72152.19743085669",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM1/geoBoundaries-NGA-ADM1-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM1/geoBoundaries-NGA-ADM1.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM1/geoBoundaries-NGA-ADM1.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM1/geoBoundaries-NGA-ADM1-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM1/geoBoundaries-NGA-ADM1_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:50:44+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/NGA/ADM1/"
+      }
+    },
+    {
+      "path": "external/boundaries/NGA_ADM2.geojson",
+      "bytes": 9422551,
+      "sha256": "bef7f2cfa45e012f4772eaa61c7b99e5188aeba4d5c6badae7e9f9aae8c02fcd",
+      "provenance": {
+        "boundaryID": "NGA-ADM2-59680162",
+        "boundaryName": "Nigeria",
+        "boundaryISO": "NGA",
+        "boundaryYearRepresented": "2022",
+        "boundaryType": "ADM2",
+        "boundaryCanonical": "Local Government Areas",
+        "boundarySource": "GRID3",
+        "boundaryLicense": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+        "licenseDetail": "nan",
+        "licenseSource": "data.grid3.org/datasets/grid3-nigeria-local-government-area-boundaries-1/explore?location=8.959048%2C8.685290%2C6.61",
+        "boundarySourceURL": "data.grid3.org/datasets/grid3-nigeria-local-government-area-boundaries-1/explore?location=8.959048%2C8.685290%2C6.61",
+        "sourceDataUpdateDate": "Sun Feb 26 12:26:14 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Western Africa",
+        "worldBankIncomeGroup": "Lower-middle-income Countries",
+        "admUnitCount": "774",
+        "meanVertices": "281.0",
+        "minVertices": "44",
+        "maxVertices": "2801",
+        "meanPerimeterLengthKM": "174.9666698900814",
+        "minPerimeterLengthKM": "9.798287275247876",
+        "maxPerimeterLengthKM": "711.1791811501472",
+        "meanAreaSqKM": "1178.956986535945",
+        "minAreaSqKM": "5.048226126834884",
+        "maxAreaSqKM": "10752.279189794415",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM2/geoBoundaries-NGA-ADM2-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM2/geoBoundaries-NGA-ADM2.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM2/geoBoundaries-NGA-ADM2.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM2/geoBoundaries-NGA-ADM2-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/NGA/ADM2/geoBoundaries-NGA-ADM2_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:52:55+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/NGA/ADM2/"
+      }
+    },
+    {
+      "path": "external/boundaries/ZAF_ADM0.geojson",
+      "bytes": 13011312,
+      "sha256": "9b8745825e62ed10b478a93aa12f9a64a1b6d583a7e13eee4d1bf22f3f48843f",
+      "provenance": {
+        "boundaryID": "ZAF-ADM0-27424455",
+        "boundaryName": "South Africa",
+        "boundaryISO": "ZAF",
+        "boundaryYearRepresented": "2020",
+        "boundaryType": "ADM0",
+        "boundaryCanonical": "Republic of South Africa",
+        "boundarySource": "OCHA ROSEA, South African Municipal Demarcation Board",
+        "boundaryLicense": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+        "licenseDetail": "nan",
+        "licenseSource": "data.humdata.org/dataset/south-africa-admin-level-1-boundaries",
+        "boundarySourceURL": "data.humdata.org/dataset/south-africa-admin-level-1-boundaries",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Southern Africa",
+        "worldBankIncomeGroup": "Upper-middle-income Countries",
+        "admUnitCount": "1",
+        "meanVertices": "282824.0",
+        "minVertices": "282824",
+        "maxVertices": "282824",
+        "meanPerimeterLengthKM": "9793.638606337932",
+        "minPerimeterLengthKM": "9793.638606337932",
+        "maxPerimeterLengthKM": "9793.638606337932",
+        "meanAreaSqKM": "1220813.3282449252",
+        "minAreaSqKM": "1220813.3282449252",
+        "maxAreaSqKM": "1220813.3282449252",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM0/geoBoundaries-ZAF-ADM0-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM0/geoBoundaries-ZAF-ADM0.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM0/geoBoundaries-ZAF-ADM0.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM0/geoBoundaries-ZAF-ADM0-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM0/geoBoundaries-ZAF-ADM0_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:52:01+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/ZAF/ADM0/"
+      }
+    },
+    {
+      "path": "external/boundaries/ZAF_ADM1.geojson",
+      "bytes": 19806654,
+      "sha256": "5d82ed95b034f50d69d96c9b7136e9b5868a5fb4ef2d8905a6a6ac3715fef452",
+      "provenance": {
+        "boundaryID": "ZAF-ADM1-76434192",
+        "boundaryName": "South Africa",
+        "boundaryISO": "ZAF",
+        "boundaryYearRepresented": "2020",
+        "boundaryType": "ADM1",
+        "boundaryCanonical": "Province",
+        "boundarySource": "OCHA ROSEA, South African Municipal Demarcation Board",
+        "boundaryLicense": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+        "licenseDetail": "nan",
+        "licenseSource": "data.humdata.org/dataset/south-africa-admin-level-1-boundaries",
+        "boundarySourceURL": "data.humdata.org/dataset/south-africa-admin-level-1-boundaries",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Southern Africa",
+        "worldBankIncomeGroup": "Upper-middle-income Countries",
+        "admUnitCount": "9",
+        "meanVertices": "51243.0",
+        "minVertices": "5690",
+        "maxVertices": "116289",
+        "meanPerimeterLengthKM": "2972.1078982644103",
+        "minPerimeterLengthKM": "1220.8918829360168",
+        "maxPerimeterLengthKM": "5346.6489164141385",
+        "meanAreaSqKM": "135645.92536054473",
+        "minAreaSqKM": "18178.30810222541",
+        "maxAreaSqKM": "372889.37837173446",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM1/geoBoundaries-ZAF-ADM1-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM1/geoBoundaries-ZAF-ADM1.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM1/geoBoundaries-ZAF-ADM1.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM1/geoBoundaries-ZAF-ADM1-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM1/geoBoundaries-ZAF-ADM1_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:50:17+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/ZAF/ADM1/"
+      }
+    },
+    {
+      "path": "external/boundaries/ZAF_ADM2.geojson",
+      "bytes": 32530325,
+      "sha256": "6cc504ad835b37823da687a3fd3f0cab63608a6c8a5ad906e1011f1554bbbbdd",
+      "provenance": {
+        "boundaryID": "ZAF-ADM2-47623444",
+        "boundaryName": "South Africa",
+        "boundaryISO": "ZAF",
+        "boundaryYearRepresented": "2020",
+        "boundaryType": "ADM2",
+        "boundaryCanonical": "District municipality",
+        "boundarySource": "OCHA ROSEA, South African Municipal Demarcation Board",
+        "boundaryLicense": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+        "licenseDetail": "nan",
+        "licenseSource": "data.humdata.org/dataset/south-africa-admin-level-1-boundaries",
+        "boundarySourceURL": "data.humdata.org/dataset/south-africa-admin-level-1-boundaries",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023",
+        "buildDate": "Dec 12, 2023",
+        "Continent": "Africa",
+        "UNSDG-region": "Sub-Saharan Africa",
+        "UNSDG-subregion": "Southern Africa",
+        "worldBankIncomeGroup": "Upper-middle-income Countries",
+        "admUnitCount": "52",
+        "meanVertices": "14545.0",
+        "minVertices": "1418",
+        "maxVertices": "55427",
+        "meanPerimeterLengthKM": "1116.210115919743",
+        "minPerimeterLengthKM": "312.7577230625809",
+        "maxPerimeterLengthKM": "3197.841373204676",
+        "meanAreaSqKM": "23477.17938932505",
+        "minAreaSqKM": "1644.9310936000022",
+        "maxAreaSqKM": "126836.33319419772",
+        "staticDownloadLink": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM2/geoBoundaries-ZAF-ADM2-all.zip",
+        "gjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM2/geoBoundaries-ZAF-ADM2.geojson",
+        "tjDownloadURL": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM2/geoBoundaries-ZAF-ADM2.topojson",
+        "imagePreview": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM2/geoBoundaries-ZAF-ADM2-PREVIEW.png",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/ZAF/ADM2/geoBoundaries-ZAF-ADM2_simplified.geojson",
+        "_retrieved_utc": "2026-10-19T12:52:16+00:00",
+        "_api_url": "https://www.geoboundaries.org/api/current/gbOpen/ZAF/ADM2/"
+      }
+    }
+  ]
+}
