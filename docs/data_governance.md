@@ -72,15 +72,15 @@ Open-Meteo Historical Archive (ERA5/ERA5-Land): nine pilot cities, hourly,
 <https://open-meteo.com/en/terms>; marked *verify* in the inventory — must be
 re-read before publishing derived data or any commercial use.
 
-### Acquired (Day 4, partial) — outage records
+### Acquired (Days 4–10) — outage records
 
 | Data | License status | Note |
 |---|---|---|
 | South Africa: Eskom hourly grid metrics incl. Manual Load Reduction — `data/raw/outages/zaf_eskom_hourly.sqlite` (83 280 rows, 2017-04 → 2026-09) via an unofficial Eskom mirror | ⚠️ **No license file in the mirror's repo**; underlying data is Eskom portal output (Eskom's website terms apply) | Portfolio/research use only; redistribution not assured — provenance caveat documented in `reports/day04_outage_sources.md` §3, re-check before publishing derived data |
-| Nigeria: grid-collapse incidents from NERC annual reports | Public (verify per report) | Extractable, not yet downloaded |
-| Kenya: KPLC planned-interruption notices | Government utility terms (verify) | Image-only PDFs — OCR required; history depth unverified (Day 10 follow-ups) |
+| Nigeria: grid-collapse events from NERC annual reports — `data/raw/outages/nerc/events_extracted.csv` | Public (verify per report) | Acquired Day 10 with per-event provenance (document + page); counts reconciled with NERC Table 24 |
+| Kenya: KPLC planned-interruption notices — `data/raw/outages/kenya/` | Government utility terms (verify) | Acquisition paths proven Day 10; planned-outage analysis only |
 
-### Acquired (Day 5, in flight) — World Bank indicators
+### Acquired (Day 5) — World Bank indicators
 
 Indicator JSON downloaded via the World Bank API for KEN/ZAF/NGA with
 `_manifest.json` provenance. License is **CC BY 4.0 per indicator (verify per
@@ -121,23 +121,36 @@ Known coverage gaps to document, not hide (inventory §F; Day 4 interim
 answers in `reports/day04_outage_sources.md`): no public machine-readable
 outage history *at equal depth for all three pilots* — South Africa has a
 dense national hourly record (via a no-license mirror), Nigeria sparse
-national events, Kenya planned notices only; formal go/no-go still due Day 7.
-World Bank indicators have **no locality detail** (national context only);
-South Africa EskomSePush history sits behind a gated/paid tier.
+national events, Kenya planned notices only. The formal go/no-go decision
+per source is `reports/day07_data_audit.md` (Day 7) and binds everything
+downstream. World Bank indicators have **no locality detail** (national
+context only); South Africa EskomSePush history sits behind a gated/paid tier.
+
+Label coverage that must not be overstated:
+
+| Country | Label | Window | Caveat |
+|---|---|---|---|
+| South Africa | hourly load-shedding (`MLR > 0`) | 2017-04 → 2026-09 | Mirror with no license; a missing MLR value is a **data hole**, never "no shedding" |
+| Nigeria | national grid-collapse day | 2023–2025 | 2019–2022 are **not labelable** — "no row" must never read as "no collapse" |
+| Kenya | planned-interruption notices | depth verified Day 10 | Planned outages only — never mixed with unplanned events |
 
 ## 5. Time and label integrity
 
 - **UTC by construction:** weather requested with `timezone=UTC`; local-time
-  conversion deferred to Day 8; tz-aware UTC normalization enforced on Day 8
-  (no DST in the three pilot countries).
+  conversion and tz-aware UTC normalization enforced on Day 8
+  (`src/cleaning/standardize.py`, no DST in the three pilot countries).
 - **Planned vs unplanned** interruptions stay distinguishable at all times
   (Day 10); event start, restoration time, and notice publication time are
   stored as separate fields.
 - **Leakage rule:** forecast variables carry an issue timestamp; only
   forecasts issued *before* the prediction cutoff may enter features
-  (enforced Day 18). Forecast data is never used for training labels.
+  (audited Day 14, enforced in the Day 18 experiment). Forecast data is never
+  used for training labels.
 - **Matching rule:** outages → boundaries by point-in-polygon on coordinates;
   unit names are only a secondary check (5 duplicate names in NGA ADM2).
+- **"Unknown" is never "zero":** a missing label, an unsourced row or a
+  non-labelable year is excluded from the frame and documented, never encoded
+  as a negative class.
 
 ## 6. Publication rules
 

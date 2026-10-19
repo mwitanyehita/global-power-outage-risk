@@ -49,6 +49,7 @@ st.markdown(
       .gr-wip    { background: rgba(250,204,21,0.16); color: #facc15; border: 1px solid rgba(250,204,21,0.35); }
       .gr-todo   { background: rgba(148,163,184,0.13);color: #94a3b8; border: 1px solid rgba(148,163,184,0.28); }
       .gr-bad    { background: rgba(239,68,68,0.16);  color: #f87171; border: 1px solid rgba(239,68,68,0.35); }
+      .gr-skip   { background: rgba(148,163,184,0.07);color: #64748b; border: 1px dashed rgba(148,163,184,0.28); }
       .gr-card { border: 1px solid rgba(148,163,184,0.18); border-radius: 0.7rem;
                  padding: 0.7rem 0.9rem; margin-bottom: 0.55rem; }
       .gr-kv { color: #8b93a7; font-size: 0.76rem; text-transform: uppercase;
@@ -66,11 +67,11 @@ st.markdown(
 
 STATUS_CLASS = {
     "done": "gr-done", "in progress": "gr-wip",
-    "pending": "gr-todo", "blocked": "gr-bad",
+    "pending": "gr-todo", "blocked": "gr-bad", "skipped": "gr-skip",
 }
 STATUS_MARK = {
     "done": "● done", "in progress": "◐ in progress",
-    "pending": "○ pending", "blocked": "✕ blocked",
+    "pending": "○ pending", "blocked": "✕ blocked", "skipped": "– skipped",
 }
 
 
@@ -273,7 +274,7 @@ def render_changes() -> None:
 def render_pulse() -> None:
     now = datetime.now(timezone.utc)
     plan = S.plan_status()
-    day_now = S.current_day(plan)
+    day_now = S.current_build_day(plan)
     git = S.git_snapshot()
     totals = S.data_totals()
 
@@ -342,7 +343,10 @@ def render_pulse() -> None:
         with c2:
             st.subheader("Timeline")
             fig = go.Figure()
-            colors = {"done": "#22c55e", "in progress": "#facc15", "pending": "#475569"}
+            colors = {
+                "done": "#22c55e", "in progress": "#facc15",
+                "pending": "#475569", "skipped": "#334155",
+            }
             for r in plan:
                 fig.add_trace(go.Scatter(
                     x=[r["day"]], y=[r["task"]],
@@ -561,9 +565,13 @@ def render_pulse() -> None:
         out = S.outage_health()
         if not out["files"]:
             st.info(
-                "No outage label data yet. Day 4 is the next acquisition step — "
-                "the dashboard will pick it up as soon as it lands in "
-                "data/raw/outages/."
+                "No outage label data found under `data/raw/outages/`. "
+                "Populate it with the acquisition CLIs (for example "
+                "`python -m src.ingestion.kplc --all` for Kenya, "
+                "`python -m src.ingestion.nerc` for Nigeria, and the Eskom "
+                "hourly record for South Africa) — the dashboard re-reads the "
+                "workspace on every refresh and picks the files up as soon "
+                "as they land."
             )
         else:
             st.subheader("Load-shedding history — the label signal")
