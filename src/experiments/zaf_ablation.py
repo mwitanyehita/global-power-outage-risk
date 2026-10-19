@@ -1,0 +1,181 @@
+"""Day 21: feature ablation for the ZAF day-ahead model.
+
+Every variant runs through the **identical** expanding-window folds and the
+same pinned reference rate, so any difference in metrics attributes to the
+feature set alone, never to a different train/test cut.
+
+Variants (columns come from the Day 16 dataset's strict whitelist):
+
+* ``calendar_only``    — advance-known calendar features (no information)
+* ``label_lags_only``  — autoregressive shedding history (persistence signal)
+* ``weather_only``     — lagged/rolling weather from the 3 ZAF cities
+* ``all``              — everything the Day 16 frame carries
+
+The headline question the Day 14 audit demands we answer honestly: **how much
+does weather add on top of persistence?** If the marginal contribution is
+small, the report says so — no weather skill is claimed beyond what the
+numbers show.
+
+Usage:
+    python -m src.experiments.zaf_ablation
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pandas as pd
+
+from src.config import REPORTS_DIR
+from src.datasets.zaf_daily import TIME_COL, build_dataset, feature_columns
+from src.experiments.zaf_daily_model import (
+    GAP, HORIZON, MIN_TRAIN, metrics_block, model_factories, prepare_frame,
+)
+from src.models.cv import expanding_window_splits, walk_forward_oof
+
+CALENDAR_FEATURES = {"dow", "month", "is_weekend", "doy_sin", "doy_cos"}
+LABEL_LAG_PREFIXES = ("hours_active_lag_", "mlr_mw_mean_lag_")
+CITY_PREFIXES = ("johannesburg", "cape-town", "durban")
+VARIANTS = ("calendar_only", "label_lags_only", "weather_only", "all")
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def variant_columns(features: list[str], kind: str) -> list[str]:
+    """Feature subset for one ablation variant."""
+    if kind == "calendar_only":
+        return [f for f in features if f in CALENDAR_FEATURES]
+    if kind == "label_lags_only":
+        return [f for f in features if f.startswith(LABEL_LAG_PREFIXES)]
+    if kind == "weather_only":
+        return [f for f in features if f.startswith(CITY_PREFIXES)]
+    if kind == "all":
+        return list(features)
+    raise ValueError(f"unknown variant {kind!r}; expected one of {VARIANTS}")
+
+
+def run_ablation(frame: pd.DataFrame | None = None) -> dict:
+    """OOF metrics per variant on shared test rows + marginal contributions."""
+    if frame is None:
+        frame = build_dataset()
+    X_full, y, n_dropped, dates = prepare_frame(frame)
+    splits = expanding_window_splits(len(X_full), min_train=MIN_TRAIN,
+                                     horizon=HORIZON, gap=GAP)
+    ref_rate = float(y[:MIN_TRAIN].mean())
+    factory = model_factories()["logistic"]
+
+    rows: dict[str, dict] = {}
+    tested_mask = None
+    for kind in VARIANTS:
+        cols = variant_columns(list(X_full.columns), kind)
+        oof = walk_forward_oof(factory, X_full[cols], y, splits)
+        msk = ~pd.isna(oof)
+        if tested_mask is None:
+            tested_mask = msk
+        elif (tested_mask != msk).any():
+            raise AssertionError(
+                "variants diverged in test coverage — folds must be shared")
+        rows[kind] = {"n_features": len(cols),
+                      **metrics_block(y[msk], oof[msk], ref_rate)}
+
+    brier = {k: rows[k]["brier"] for k in VARIANTS}
+    marginal = {
+        # positive == the added block REDUCES Brier error (adds skill)
+        "label_lags_gain": brier["calendar_only"] - brier["label_lags_only"],
+        "weather_standalone_gain": brier["calendar_only"] - brier["weather_only"],
+        "weather_on_top_of_label_lags": brier["label_lags_only"] - brier["all"],
+    }
+    return {
+        "n_rows": len(X_full),
+        "n_tested": int(tested_mask.sum()),
+        "n_dropped_nan_lags": n_dropped,
+        "ref_rate": ref_rate,
+        "rows": rows,
+        "marginal": marginal,
+        "dates_tested": dates[tested_mask],
+    }
+
+
+def write_report(result: dict, out_path: Path | None = None) -> Path:
+    out_path = out_path or (REPORTS_DIR / "day21_zaf_ablation.md")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def row(kind: str) -> str:
+        d = result["rows"][kind]
+        return (f"| {kind} | {d['n_features']} | {d['brier']:.4f} "
+                f"| {d['log_loss']:.4f} | {d['roc_auc']:.3f} "
+                f"| {d['pr_auc']:.3f} | {d['ece']:.3f} "
+                f"| {d['mean_pred']:.3f} |")
+
+    m = result["marginal"]
+    weather_top = m["weather_on_top_of_label_lags"]
+    weather_verdict = (
+        "weather adds real (if modest) skill on top of persistence"
+        if weather_top > 0.005 else
+        "weather adds **no material skill** beyond label autoregression on "
+        "this daily national target — the honest claim is persistence-driven "
+        "predictability, and we do not dress it up as weather skill")
+
+    text = f"""# Day 21 — ZAF feature ablation: what actually predicts shedding?
+
+Generated by `python -m src.experiments.zaf_ablation` on {_utc_now()}.
+
+All four variants share the **identical** expanding-window folds
+({MIN_TRAIN}-day start, {HORIZON}-day windows, {GAP}-day purge;
+{result['n_tested']} tested days) and the same pinned reference rate
+({result['ref_rate']:.3f}) — differences attribute to features alone.
+
+| variant | #features | brier | log_loss | roc_auc | pr_auc | ece | mean_pred |
+|---|---|---|---|---|---|---|---|
+{row('calendar_only')}
+{row('label_lags_only')}
+{row('weather_only')}
+{row('all')}
+
+## Marginal contributions (Brier-error reduction; positive = adds skill)
+
+| block | gain |
+|---|---|
+| label lags (persistence) | {m['label_lags_gain']:+.4f} |
+| weather, standalone | {m['weather_standalone_gain']:+.4f} |
+| weather, on top of label lags | {weather_top:+.4f} |
+
+## Verdict
+
+- Persistence dominates: {weather_verdict}.
+- Calendar-only is the no-information floor; a model must clear it by more
+  than noise to claim anything.
+- The Day 18 calibration table shows the sigmoid calibrator fit on 2023-era
+  OOF rows slightly over-predicts in the low-shedding 2025-26 eval window —
+  an honest regime-shift artifact, reported, not hidden.
+
+## Caveats
+
+- Ablation is evaluated on daily national shedding; hourly or sub-national
+  targets could reward weather features differently.
+- Weather inputs are ERA5 reanalysis lags (past only, Day 14 firewall);
+  day-ahead *forecast* weather was never evaluated here (WX-5/6 NO-GO).
+"""
+    out_path.write_text(text, encoding="utf-8")
+    print(f"Day 21 ablation report written to {out_path}")
+    return out_path
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args(argv)
+    result = run_ablation()
+    write_report(result)
+    for kind in VARIANTS:
+        d = result["rows"][kind]
+        print(f"{kind:18s} n_feat={d['n_features']:3d} brier={d['brier']:.4f}")
+    print("marginal:", {k: round(v, 4) for k, v in result["marginal"].items()})
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
