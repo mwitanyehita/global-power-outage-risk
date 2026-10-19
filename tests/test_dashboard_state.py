@@ -20,14 +20,31 @@ def test_plan_status_covers_every_step():
     assert len(rows) == len(S.PLAN_STEPS)
     assert [r["day"] for r in rows] == sorted(r["day"] for r in rows)
     for row in rows:
-        assert row["status"] in {"done", "in progress", "pending", "blocked"}
+        # "skipped" = a day the source plan never specified; it has no
+        # deliverable and must not be reported as pending work.
+        assert row["status"] in {
+            "done", "in progress", "pending", "blocked", "skipped",
+        }
         assert row["task"]
 
 
 def test_current_day_is_first_unfinished_step():
     rows = S.plan_status()
-    unfinished = [r["day"] for r in rows if r["status"] != "done"]
+    # Days that were never specified are skipped: they must not hold the
+    # pointer back.
+    unfinished = [
+        r["day"] for r in rows if r["status"] not in ("done", "skipped")
+    ]
     assert S.current_day(rows) == (unfinished[0] if unfinished else rows[-1]["day"])
+
+
+def test_current_build_day_follows_the_commit_history():
+    """The build day is the last committed day plus the one in flight."""
+    committed = S.last_committed_build_day()
+    if committed is None:
+        pytest.skip("no git history available")
+    assert S.current_build_day() == committed + 1
+    assert committed >= 1
 
 
 def test_plan_steps_are_unique_and_ordered():

@@ -132,6 +132,12 @@ DATA_DIR: Final[Path] = PROJECT_ROOT / "data"
 DATA_RAW: Final[Path] = DATA_DIR / "raw"           # verbatim downloads, never edited
 DATA_EXTERNAL: Final[Path] = DATA_DIR / "external"  # reference data (boundaries, lookups)
 DATA_PROCESSED: Final[Path] = DATA_DIR / "processed"  # cleaned/derived tables
+# Sub-folders of the data zones. Defined here so that every module resolves
+# a path through one source of truth instead of re-deriving it locally.
+WEATHER_DIR: Final[Path] = DATA_RAW / "weather"     # Open-Meteo archive responses
+OUTAGES_DIR: Final[Path] = DATA_RAW / "outages"     # outage records and notices
+WORLDBANK_DIR: Final[Path] = DATA_RAW / "worldbank"  # World Bank indicator series
+BOUNDARIES_DIR: Final[Path] = DATA_EXTERNAL / "boundaries"  # geoBoundaries files
 
 NOTEBOOKS_DIR: Final[Path] = PROJECT_ROOT / "notebooks"
 REPORTS_DIR: Final[Path] = PROJECT_ROOT / "reports"

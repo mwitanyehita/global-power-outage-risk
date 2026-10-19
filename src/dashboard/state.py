@@ -24,6 +24,7 @@ Design rules
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -533,22 +534,59 @@ PLAN_STEPS = (
     (6, "Source register: licenses, dates, limitations", "Governance"),
     (7, "Data audit report, go/no-go per source", "Governance"),
     (8, "tz-aware UTC normalization and country lookup", "Transform"),
-    (9, "Feature build, weather_code treated as categorical", "Features"),
+    (9, "Weather exploratory analysis and figures", "Features"),
     (10, "Separate planned from unplanned interruptions", "Labels"),
     (11, "Point-in-polygon mapping of outages to boundaries", "Transform"),
-    (16, "Weather and exposure feature matrix", "Features"),
-    (17, "Label construction from verified outage records", "Labels"),
-    (18, "Leakage enforcement for forecast features", "Modelling"),
+    (12, "Canonical unit registry and duplicate analysis", "Transform"),
+    (13, "Coverage atlas: where data exists and where it does not", "Coverage"),
+    (14, "Leakage audit: features, splits, scaling, calibration", "Modelling"),
+    (15, "ZAF primary labels: hourly load-shedding (MLR)", "Labels"),
+    (16, "ZAF day-ahead dataset: labels + strictly-past features", "Features"),
+    (17, "NGA secondary labels: national grid-collapse days", "Labels"),
+    (18, "ZAF walk-forward model: OOF evaluation and calibration", "Modelling"),
+    (19, "Calibration protocol and publishing rule", "Modelling"),
+    (20, "NGA collapse-day baselines — no model claimed", "Modelling"),
+    (21, "ZAF feature ablation: persistence vs weather", "Modelling"),
     (22, "Live dashboard", "Product"),
     (27, "Model interpretation and limitation wording", "Modelling"),
     (29, "Attribution, README, reproducibility", "Governance"),
-    (30, "Portfolio write-up", "Product"),
+    (30, "Final summary, limitations and reproducibility checklist", "Governance"),
 )
+
+
+# Reports that, when present on disk, mean the corresponding build day has
+# landed. Keyed by plan day.
+_DAY_REPORTS = {
+    1: "data_inventory.md",
+    7: "day07_data_audit.md",
+    9: "day09_eda_weather.md",
+    10: "day10_nerc_events.md",
+    11: "day11_spatial_join.md",
+    12: "day12_duplicate_units.md",
+    14: "day14_leakage_audit.md",
+    13: "day13_coverage_maps.md",
+    15: "day15_zaf_labels.md",
+    16: "day16_zaf_dataset.md",
+    17: "day17_nga_labels.md",
+    18: "day18_zaf_model.md",
+    19: "day19_calibration.md",
+    20: "day20_nga_baseline.md",
+    21: "day21_zaf_ablation.md",
+    27: "day27_model_interpretation.md",
+    30: "day30_final_summary.md",
+}
 
 
 def _step_evidence(day: int, root: Path) -> tuple[str, str]:
     """Derive a step's status and evidence string from the workspace."""
     reports = root / "reports"
+
+    report = _DAY_REPORTS.get(day)
+    if report is not None:
+        path = reports / report
+        if path.exists():
+            return "done", path.name
+        return "pending", f"{report} not written yet"
 
     if day == 1:
         path = reports / "data_inventory.md"
@@ -575,11 +613,14 @@ def _step_evidence(day: int, root: Path) -> tuple[str, str]:
             detail = f"{out['files']} raw file(s), {out['bytes'] / 1e6:.0f} MB"
             if out["sqlite_files"]:
                 detail += f" ({', '.join(out['sqlite_files'])})"
-            return "in progress", detail
+            return "done", detail
         return "pending", "label source not yet acquired"
 
     if day == 5:
-        return "pending", "survey indicators not yet acquired"
+        manifest = root / "data" / "raw" / "worldbank" / "_manifest.json"
+        if manifest.exists():
+            return "done", "data/raw/worldbank/_manifest.json"
+        return "pending", "World Bank indicators not acquired"
 
     if day == 6:
         path = reports / "source_register.csv"
@@ -587,24 +628,11 @@ def _step_evidence(day: int, root: Path) -> tuple[str, str]:
             return "done", path.name
         return "pending", "source register not built"
 
-    if day == 7:
-        audits = sorted(reports.glob("day*_audit.md"))
-        if audits:
-            return "in progress", f"{len(audits)} audit reports present"
-        return "pending", "no audit reports"
-
-    if day in (8, 9, 10, 11):
-        if day == 10:
-            out = outage_health()
-            if out["events"]:
-                return "in progress", (
-                    f"{out['events']} canonical events "
-                    f"({out['planned']} planned / {out['unplanned']} unplanned)"
-                )
+    if day == 8:
+        module = root / "src" / "cleaning" / "standardize.py"
+        if module.exists():
+            return "done", "src/cleaning/standardize.py"
         return "pending", "transform layer not built yet"
-
-    if day in (16, 17, 18):
-        return "pending", "no model or feature pipeline yet"
 
     if day == 22:
         path = root / "app" / "dashboard.py"
@@ -612,7 +640,10 @@ def _step_evidence(day: int, root: Path) -> tuple[str, str]:
             return "in progress", "app/dashboard.py present"
         return "pending", "dashboard not started"
 
-    if day in (27, 29, 30):
+    if day == 29:
+        readme = root / "README.md"
+        if readme.exists():
+            return "in progress", "attribution strings in README; claims review pending"
         return "pending", "not started"
 
     return "pending", ""
@@ -630,11 +661,47 @@ def plan_status(root: Path = PROJECT_ROOT) -> list[dict]:
     return rows
 
 
+def last_committed_build_day(root: Path = PROJECT_ROOT) -> int | None:
+    """The highest build day that appears in a commit subject, or None.
+
+    Commit subjects in this project are titled ``Day N: ...`` (sometimes
+    ``Day N (Country): ...``), so the history is the authoritative record of
+    which build day the project has reached.
+    """
+    out = _git(["log", "--format=%s"], root)
+    if not out:
+        return None
+    days = []
+    for line in out.splitlines():
+        match = re.search(r"\bDay\s+(\d+)", line)
+        if match:
+            days.append(int(match.group(1)))
+    return max(days) if days else None
+
+
+def current_build_day(rows: list[dict] | None = None) -> int:
+    """The build day the project is on right now.
+
+    The commit history is authoritative: the last committed build day plus
+    the one in flight. Falls back to the plan board when git history is not
+    available (e.g. an exported archive).
+    """
+    committed = last_committed_build_day()
+    if committed is not None:
+        return committed + 1
+    return current_day(rows)
+
+
 def current_day(rows: list[dict] | None = None) -> int:
-    """The lowest plan day that is not finished — the project's current stage."""
+    """The lowest plan day that is not finished — the project's current stage.
+
+    Days that were never specified in the source plan are *skipped*: they
+    must not hold the pointer back, otherwise the board would claim the
+    project is still on a day that never had a deliverable.
+    """
     rows = rows if rows is not None else plan_status()
     for row in rows:
-        if row["status"] != "done":
+        if row["status"] not in ("done", "skipped"):
             return row["day"]
     return rows[-1]["day"] if rows else 0
 

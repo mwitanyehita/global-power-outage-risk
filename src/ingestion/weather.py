@@ -36,7 +36,10 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from src.config import DATA_RAW, REPORTS_DIR, ensure_dirs
+# `WEATHER_DIR` is imported from src.config so that every module resolves
+# the data layout through one source of truth; it is re-exported here
+# because `src.ingestion.weather.WEATHER_DIR` is the historical import path.
+from src.config import DATA_RAW, REPORTS_DIR, WEATHER_DIR, ensure_dirs
 
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
@@ -80,7 +83,6 @@ VALUE_RANGES = {
     "surface_pressure": (500.0, 1100.0),
 }
 
-WEATHER_DIR = DATA_RAW / "weather"
 
 
 def _utc_now() -> str:
