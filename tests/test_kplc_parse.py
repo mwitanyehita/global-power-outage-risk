@@ -180,6 +180,78 @@ def test_unknown_time_is_never_guessed():
     assert kp.parse_time_token("9.99 A.M.") == ""    # out-of-range minute
 
 
+# --- KPLC source typos (structure repaired from content, values never invented) -----
+def test_area_prefix_with_semicolon_still_starts_a_block():
+    """'AREA; JOMVU' (47 occurrences in the corpus) must not lose the block."""
+    text = ("COAST REGION\nPARTS OF MOMBASA COUNTY\n"
+            "AREA; JOMVU\nDATE: Wednesday 28.05.2025   TIME: 9.00 A.M. – 5.00 P.M.\n"
+            "Icolo, Black Devil & adjacent customers.\n")
+    events = kp.parse_notice_text(text, "doc.pdf")
+    assert len(events) == 1
+    assert events[0]["area"] == "JOMVU"
+    assert events[0]["event_date"] == "2025-05-28"
+    assert events[0]["county"] == "MOMBASA"
+
+
+def test_date_prefix_with_semicolon_is_still_a_date_line():
+    text = ("NAIROBI REGION\nAREA: NKUBU\n"
+            "DATE; Wednesday 19.03.2025   TIME: 9.00 A.M. – 5.00 P.M.\n"
+            "Nkubu premises.\n")
+    event = kp.parse_notice_text(text, "doc.pdf")[0]
+    assert event["event_date"] == "2025-03-19"
+
+
+def test_area_line_carrying_a_date_is_treated_as_the_previous_blocks_date_line():
+    """2025-05-23 / 2025-08-08 notices write the date line as ``AREA: <date> TIME``."""
+    text = ("COAST REGION\nAREA: SAMBURU TOWN, KINAGONI\n"
+            "AREA: Thursday 29.05.2025   TIME: 9.00 A.M. – 5.00 P.M.\n"
+            "Samburu Town, Kinagoni & adjacent customers.\n")
+    events = kp.parse_notice_text(text, "doc.pdf")
+    assert len(events) == 1  # no garbage block split off
+    event = events[0]
+    assert event["area"] == "SAMBURU TOWN, KINAGONI"
+    assert event["event_date"] == "2025-05-29"
+    assert (event["time_start_local"], event["time_end_local"]) == ("09:00", "17:00")
+
+
+def test_date_line_carrying_an_area_name_becomes_the_area_line():
+    """2025-08-08 notice writes the area line as ``DATE: PART OF NYALI WEST``."""
+    text = ("COAST REGION\nPARTS OF MOMBASA COUNTY\n"
+            "DATE: PART OF NYALI WEST\n"
+            "AREA: Thursday 14.08.2025   TIME: 9.00 A.M. – 5.00 P.M.\n"
+            "Engen, Orchid & adjacent customers.\n")
+    events = kp.parse_notice_text(text, "doc.pdf")
+    assert len(events) == 1
+    assert events[0]["area"] == "PART OF NYALI WEST"
+    assert events[0]["event_date"] == "2025-08-14"
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("Saturday 18.10.025", "2025-10-18"),     # 3-digit-year typo
+    ("Monday 16.02 2026", "2026-02-16"),      # missing second dot
+    ("Wednesday 07.10. 2026", "2026-10-07"),  # space after second dot (in corpus)
+    ("Wednesday 07.10.2026", "2026-10-07"),
+    ("Wednesday 15.10.", ""),                 # no year at all -> never guessed
+    ("Thurs", ""),
+    ("Sunday 27.10.2023", "2023-10-27"),      # source year typo kept verbatim
+])
+def test_date_parsing_tolerates_separator_typos_but_never_invents(raw, expected):
+    text = (f"NAIROBI REGION\nAREA: X\n"
+            f"DATE: {raw}   TIME: 9.00 A.M. – 5.00 P.M.\nPremises.\n")
+    events = kp.parse_notice_text(text, "doc.pdf")
+    assert len(events) == 1  # the DATE line stays a date line, no block split
+    assert events[0]["event_date"] == expected
+    assert events[0]["time_start_local"] == "09:00"
+
+
+def test_plural_regions_header_is_matched():
+    text = ("CENTRAL RIFT AND SOUTH NYANZA REGIONS\n"
+            "AREA: KERICHO, BOMET\nDATE: Monday 30.09.2024   TIME: 7.00 A.M. - 5.00 P.M.\n"
+            "Chemosit Market & adjacent customers.\n")
+    event = kp.parse_notice_text(text, "doc.pdf")[0]
+    assert event["region"] == "CENTRAL RIFT AND SOUTH NYANZA"
+
+
 # --- empty / image-only ------------------------------------------------------------
 def test_image_only_or_empty_text_yields_no_events():
     assert kp.parse_notice_text("", "image_only.pdf") == []
@@ -304,13 +376,40 @@ def test_manifest_overrides_glob_when_present(tmp_path, monkeypatch):
     assert summary["n_unparseable"] == 0
 
 
-# --- notice file naming ------------------------------------------------------------
+# --- notice file naming + manifest -------------------------------------------------
 def test_notice_stem_uses_posted_date_and_disambiguates_same_day():
     claimed: set[str] = set()
     first = kp.notice_stem({"posted": "Oct 16, 2026 16:05 pm"}, 0, claimed)
     second = kp.notice_stem({"posted": "Oct 16, 2026 12:20 pm"}, 1, claimed)
     assert first == "kplc_notice_2026-10-16"
     assert second == "kplc_notice_2026-10-16_1220"
+
+
+def test_download_notices_skips_existing_and_writes_manifest(tmp_path):
+    """Existing files are skipped (no network) and the manifest is keyed by the
+    *file name* so extraction picks them up — regression test for the stem-key bug."""
+    import json
+
+    existing = tmp_path / "kplc_notice_2026-10-16.pdf"
+    existing.write_bytes(b"%PDF-1.4 sample")
+    notices = [{
+        "title": "Special Power Supply Interruption Notice - 16.10.2026",
+        "posted": "Oct 16, 2026 16:05 pm",
+        "pdf_url": "https://kplc.co.ke/storage/01M52D3TEST.pdf",
+    }]
+    report = kp.download_notices(notices, pdf_dir=tmp_path, limit=1, sleep_s=0)
+    assert report["downloaded"] == 0
+    assert report["skipped_existing"] == 1
+    assert report["failed"] == 0
+
+    manifest = json.loads((tmp_path / kp.MANIFEST_NAME).read_text(encoding="utf-8"))
+    assert list(manifest["files"]) == ["kplc_notice_2026-10-16.pdf"]
+    entry = manifest["files"]["kplc_notice_2026-10-16.pdf"]
+    assert entry["bytes"] == len(b"%PDF-1.4 sample")
+    assert len(entry["sha256"]) == 64
+    assert entry["url"].endswith("01M52D3TEST.pdf")
+    assert entry["fetched_at"] is None  # pre-existing file, fetch time unknown
+    assert kp._list_pdfs(tmp_path) == [existing]
 
 
 def test_notice_stem_falls_back_to_title_slug_without_posted():

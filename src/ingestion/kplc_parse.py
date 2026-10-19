@@ -86,10 +86,14 @@ EVENT_COLUMNS: list[str] = [
 ]
 
 # --- line patterns -----------------------------------------------------------------
-_AREA_RE = re.compile(r"^\s*AREAS?\s*:\s*(?P<area>.*)$", re.IGNORECASE)
-_DATE_TOKEN_RE = re.compile(r"\bDATE\s*:", re.IGNORECASE)
+# KPLC typos swap the punctuation/prefix occasionally ("AREA; JOMVU", "AREA: <date>"),
+# so prefixes accept [:;.] and content decides between AREA and DATE (see _classify_line).
+_AREA_RE = re.compile(r"^\s*AREAS?\s*[:;.]\s*(?P<area>.*)$", re.IGNORECASE)
+_DATE_TOKEN_RE = re.compile(r"\bDATE\s*[:;]", re.IGNORECASE)
 _TIME_TOKEN_RE = re.compile(r"\bTIME\s*:?\s*(?P<rest>.*)$", re.IGNORECASE)
-_DMY_RE = re.compile(r"(?P<d>\d{1,2})\.\s*(?P<m>\d{1,2})\.\s*(?P<y>\d{4})")
+# DD.MM.YYYY as published; tolerant of verified typos: missing second dot
+# ("16.02 2026") and a 3-digit year ("18.10.025"). Never used to invent a value.
+_DMY_RE = re.compile(r"(?P<d>\d{1,2})\.\s*(?P<m>\d{1,2})(?:\.\s*|\s+)(?P<y>\d{3,4})")
 # Uppercase-only headers, e.g. "NAIROBI REGION", "MT. KENYA REGION",
 # "PARTS OF UASIN GISHU COUNTY", "KISUMU COUNTY".
 _REGION_RE = re.compile(
@@ -112,6 +116,11 @@ _BOILERPLATE_PREFIXES = (
     "we regret any inconvenience",
     "the interruption was caused by",
     "and will be reinstated at",
+    "for further information",
+    "for inquiries",
+    "for more information",
+    "interruption notices may be viewed",
+    "you can view",
     "www.kplc.co.ke",
 )
 _SPECIAL_HEADER_RE = re.compile(
@@ -187,7 +196,15 @@ def _clean_area(area: str) -> str:
 
 def _iso_date(d: str, m: str, y: str) -> str:
     try:
-        return _date(int(y), int(m), int(d)).isoformat()
+        year = int(y)
+    except ValueError:  # pragma: no cover - regex guarantees digits
+        return ""
+    if len(y) <= 3:  # "18.10.025" -> 2025 (3-digit-year typo, digits kept verbatim)
+        year += 2000
+    if not 1900 <= year <= 2100:
+        return ""
+    try:
+        return _date(year, int(m), int(d)).isoformat()
     except ValueError:
         return ""
 
@@ -198,13 +215,40 @@ def _is_furniture(line: str) -> bool:
 
 
 def _is_boilerplate(line: str) -> bool:
-    """Per-page letterhead or stock prose (e.g. the Rule-27 block repeated on page 2).
+    """Per-page letterhead, stock prose or footers (e.g. the Rule-27 block repeated
+    on page 2).
 
     Once one of these starts, the following wrapped lines belong to it too — they are
     absorbed via a per-block flag so they never leak into the previous event's
     premises_text.
     """
     return line.lower().startswith(_BOILERPLATE_PREFIXES)
+
+
+def _has_time(text: str) -> bool:
+    start, end = parse_time_range(text)
+    return bool(start or end)
+
+
+def _classify_line(line: str) -> tuple[str, str]:
+    """Classify a non-header line as ``("date" | "area" | "time" | "other", value)``.
+
+    Content beats prefix where KPLC swapped them (verified in the 2025-05-23 and
+    2025-08-08 notices): ``AREA: Thursday 29.05.2025 TIME: ...`` is a date line, and
+    ``DATE: PART OF NYALI WEST`` is an area name.
+    """
+    m = _DATE_TOKEN_RE.search(line)
+    if m:
+        value = line[m.end():].strip()
+        if _DMY_RE.search(value) or _has_time(value):
+            return "date", value
+        # "DATE: PART OF NYALI WEST" is an area name; a bare "DATE:" leaves the
+        # date unknown rather than inventing one.
+        return ("area", value) if value else ("date", value)
+    m = _TIME_TOKEN_RE.search(line)
+    if m and _has_time(m.group("rest")):
+        return "time", line
+    return "other", line
 
 
 # --- the parser --------------------------------------------------------------------
@@ -271,9 +315,19 @@ def parse_notice_text(text: str, source_document: str) -> list[dict]:
             continue
         m = _AREA_RE.match(line)
         if m:
+            value = m.group("area").strip()
+            if (pending is not None and not pending["seen_date"]
+                    and _DMY_RE.search(value) and _TIME_TOKEN_RE.search(value)):
+                kind, value = "date", line  # typo: "AREA: 29.05.2025 TIME: ..." -> date
+            else:
+                kind, value = "area", value
+        else:
+            kind, value = _classify_line(line)
+
+        if kind == "area":
             flush()
             pending = {
-                "area": m.group("area").strip(),
+                "area": value,
                 "region": region,
                 "county": county,
                 "event_date": "",
@@ -284,26 +338,33 @@ def parse_notice_text(text: str, source_document: str) -> list[dict]:
                 "in_boilerplate": False,
             }
             continue
+
         if pending is None:
             continue
 
-        is_date_line = bool(_DATE_TOKEN_RE.search(line)) or (
-            not pending["seen_date"] and bool(_DMY_RE.search(line)))
-        if is_date_line:
+        if kind == "date":
             pending["seen_date"] = True
-            d = _DMY_RE.search(line)
+            d = _DMY_RE.search(value)
             if d:
                 pending["event_date"] = _iso_date(d.group("d"), d.group("m"), d.group("y"))
             # TIME may sit on the date line, on the next line, or be absent.
-            consumed = _apply_times(pending, line, lines, i)
-            i += consumed
+            i += _apply_times(pending, value, lines, i)
             continue
 
-        if _TIME_TOKEN_RE.search(line) and not pending["seen_date"]:
-            _apply_times(pending, line, lines, i)  # TIME before DATE (defensive)
+        if kind == "time" and not pending["seen_date"]:
+            _apply_times(pending, value, lines, i)  # TIME before DATE (defensive)
             continue
 
         if not pending["seen_date"]:
+            if _DMY_RE.search(line):
+                # A bare "27.10.2024" line with no DATE: prefix still dates the block.
+                pending["seen_date"] = True
+                d = _DMY_RE.search(line)
+                if d:
+                    pending["event_date"] = _iso_date(
+                        d.group("d"), d.group("m"), d.group("y"))
+                i += _apply_times(pending, line, lines, i)
+                continue
             # Lines between AREA: and DATE: belong to the area value (wrap-around).
             pending["area"] = f"{pending['area']} {line}".strip()
             continue
@@ -460,9 +521,9 @@ def download_notices(
             path = pdf_dir / f"{stem}.pdf"
             if path.exists():
                 skipped += 1
-                if not (files.get(stem) or {}).get("sha256"):
+                if not (files.get(path.name) or {}).get("sha256"):
                     data = path.read_bytes()
-                    files[stem] = {
+                    files[path.name] = {
                         "filename": path.name,
                         "url": url,
                         "title": notice.get("title", ""),
@@ -480,7 +541,7 @@ def download_notices(
                 continue
             data = resp.content
             path.write_bytes(data)
-            files[stem] = {
+            files[path.name] = {
                 "filename": path.name,
                 "url": url,
                 "title": notice.get("title", ""),
