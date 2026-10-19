@@ -35,6 +35,7 @@ from src.config import DATA_EXTERNAL, DATA_RAW, PROJECT_ROOT, REPORTS_DIR
 
 WEATHER_DIR = DATA_RAW / "weather"
 BOUNDARY_DIR = DATA_EXTERNAL / "boundaries"
+OUTAGES_DIR = DATA_RAW / "outages"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 
 # Pilot cities, mirrored from src.ingestion.weather.CITIES so the dashboard can
@@ -392,6 +393,126 @@ def boundary_health() -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Outage records (the label source)
+# ---------------------------------------------------------------------------
+def outage_files() -> list[Path]:
+    """Raw outage-label downloads held in data/raw/outages/."""
+    if not OUTAGES_DIR.exists():
+        return []
+    return sorted(
+        p for p in OUTAGES_DIR.iterdir()
+        if p.is_file() and not p.name.endswith("_meta.json")
+    )
+
+
+def outage_health() -> dict:
+    """Summarise the outage label material on disk.
+
+    Two shapes are recognised:
+
+    * ``*.sqlite`` — the Eskom system-operations hourly export, whose
+      ``Manual Load_Reduction(MLR)`` column is the South African
+      load-shedding label signal.
+    * ``*.json``   — canonical raw intakes in the ``OutageEvent`` shape.
+    """
+    files = outage_files()
+    summary = {
+        "files": len(files),
+        "sqlite_files": [p.name for p in files if p.suffix == ".sqlite"],
+        "json_files": [p.name for p in files if p.suffix == ".json"],
+        "bytes": sum(p.stat().st_size for p in files),
+        "events": 0,
+        "planned": 0,
+        "unplanned": 0,
+    }
+    for path in files:
+        if path.suffix != ".json":
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        records = payload.get("records") or []
+        summary["events"] += len(records)
+        for rec in records:
+            if rec.get("is_planned") or rec.get("outage_type") in ("planned", "maintenance"):
+                summary["planned"] += 1
+            else:
+                summary["unplanned"] += 1
+    return summary
+
+
+def eskom_load_reduction() -> pd.DataFrame:
+    """Parse the Eskom hourly export into a timestamped load-reduction series.
+
+    The raw export stores 12-hour clock times (``01:00:00 PM``) in hour-major
+    order; this returns a clean UTC-aware frame with one row per hour:
+
+        time            tz-aware UTC timestamp
+        mlr_mw          manual load reduction in MW (0 when none was applied)
+        residual_demand residual demand in MW
+        total_re        total renewable generation in MW
+
+    Returns an empty frame when the file is absent.
+    """
+    import sqlite3
+
+    path = OUTAGES_DIR / "zaf_eskom_hourly.sqlite"
+    if not path.exists():
+        return pd.DataFrame()
+
+    with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as conn:
+        raw = pd.read_sql_query("SELECT * FROM eskom", conn)
+
+    times = pd.to_datetime(
+        raw["Date Time Hour Beginning"],
+        format="%Y-%m-%d %I:%M:%S %p",
+        errors="coerce",
+    )
+    frame = pd.DataFrame({
+        "time": times,
+        "mlr_mw": pd.to_numeric(raw.get("Manual Load_Reduction(MLR)"), errors="coerce"),
+        "residual_demand": pd.to_numeric(raw.get("Residual Demand"), errors="coerce"),
+        "total_re": pd.to_numeric(raw.get("Total RE"), errors="coerce"),
+    }).dropna(subset=["time"])
+    frame = frame.sort_values("time").reset_index(drop=True)
+    return frame
+
+
+def eskom_episodes(frame: pd.DataFrame) -> pd.DataFrame:
+    """Group contiguous load-reduction hours into discrete events.
+
+    An episode is a run of consecutive hours with ``mlr_mw > 0``. Episodes
+    separated by more than ``gap_hours`` are kept apart, so a short lull
+    does not merge two separate load-shedding events.
+
+    Returns columns: start, end, hours, peak_mw, mean_mw, gap_hours.
+    """
+    if frame.empty:
+        return pd.DataFrame()
+
+    active = frame["mlr_mw"] > 0
+    if not active.any():
+        return pd.DataFrame()
+
+    gap = frame["time"].diff().dt.total_seconds().div(3600)
+    breaks = (~active) | (gap > 1.5)
+    groups = breaks.cumsum()[active]
+
+    rows = []
+    for _, grp in frame[active].groupby(groups):
+        rows.append({
+            "start": grp["time"].min(),
+            "end": grp["time"].max(),
+            "hours": len(grp),
+            "peak_mw": float(grp["mlr_mw"].max()),
+            "mean_mw": float(grp["mlr_mw"].mean()),
+        })
+    episodes = pd.DataFrame(rows).sort_values("peak_mw", ascending=False)
+    return episodes.reset_index(drop=True)
+
+
+# ---------------------------------------------------------------------------
 # Plan tracking
 # ---------------------------------------------------------------------------
 # The plan rows below are the project's own day-by-day schedule (see
@@ -444,6 +565,12 @@ def _step_evidence(day: int, root: Path) -> tuple[str, str]:
         return "pending", "no weather downloads"
 
     if day == 4:
+        out = outage_health()
+        if out["files"]:
+            detail = f"{out['files']} raw file(s), {out['bytes'] / 1e6:.0f} MB"
+            if out["sqlite_files"]:
+                detail += f" ({', '.join(out['sqlite_files'])})"
+            return "in progress", detail
         return "pending", "label source not yet acquired"
 
     if day == 5:
@@ -462,6 +589,13 @@ def _step_evidence(day: int, root: Path) -> tuple[str, str]:
         return "pending", "no audit reports"
 
     if day in (8, 9, 10, 11):
+        if day == 10:
+            out = outage_health()
+            if out["events"]:
+                return "in progress", (
+                    f"{out['events']} canonical events "
+                    f"({out['planned']} planned / {out['unplanned']} unplanned)"
+                )
         return "pending", "transform layer not built yet"
 
     if day in (16, 17, 18):
@@ -573,5 +707,15 @@ def source_catalog() -> pd.DataFrame:
             "sha256": None,
             "license": meta.get("boundaryLicense", "?"),
             "url": meta.get("gjDownloadURL"),
+        })
+    for path in outage_files():
+        rows.append({
+            "file": path.name,
+            "kind": "outage labels (label source)",
+            "bytes": path.stat().st_size,
+            "retrieved_utc": None,
+            "sha256": None,
+            "license": "see docs/data_governance.md",
+            "url": None,
         })
     return pd.DataFrame(rows)

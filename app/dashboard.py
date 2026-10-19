@@ -37,7 +37,7 @@ st.set_page_config(page_title="GridRisk AI — Live", page_icon="⚡", layout="w
 st.markdown(
     """
     <style>
-      .block-container { padding-top: 1.6rem; padding-bottom: 3rem; }
+      .block-container { padding-top: 4.1rem; padding-bottom: 2.2rem; }
       .gr-title { font-size: 1.9rem; font-weight: 750; letter-spacing: -0.02em;
                   margin: 0; line-height: 1.15; }
       .gr-sub { color: #8b93a7; font-size: 0.86rem; margin-top: 0.25rem; }
@@ -101,6 +101,18 @@ def cached_weather_long() -> pd.DataFrame:
     if not frames:
         return pd.DataFrame()
     return pd.concat(frames, ignore_index=True)
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cached_eskom():
+    """Parsed Eskom hourly load-reduction series."""
+    return S.eskom_load_reduction()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cached_eskom_episodes():
+    """Contiguous load-shedding episodes derived from the Eskom series."""
+    return S.eskom_episodes(S.eskom_load_reduction())
 
 
 @st.cache_data(ttl=900, show_spinner=False)
@@ -293,7 +305,7 @@ def render_pulse() -> None:
             f"— display only, never a training input."
         )
 
-    tabs = st.tabs(["🎯 Pulse", "🌦 Live grid", "🗺 Boundaries", "📦 Provenance"])
+    tabs = st.tabs(["🎯 Pulse", "🌦 Live grid", "⚡ Outages", "🗺 Boundaries", "📦 Provenance"])
 
     # =====================================================================
     # Tab 1 — Pulse
@@ -316,10 +328,13 @@ def render_pulse() -> None:
                 })
             st.dataframe(
                 pd.DataFrame(rows),
-                hide_index=True, use_container_width=True, height=460,
+                hide_index=True, width="stretch", height=460,
                 column_config={
                     "Day": st.column_config.NumberColumn(format="%d", width="small"),
                     "Status": st.column_config.TextColumn(width="small"),
+                    "Step": st.column_config.TextColumn(width="medium"),
+                    "Area": st.column_config.TextColumn(width="small"),
+                    "Evidence": st.column_config.TextColumn(width="medium"),
                 },
             )
 
@@ -349,7 +364,7 @@ def render_pulse() -> None:
                 plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                 font=dict(color="#cbd5e1", size=11),
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             st.subheader("Working now")
             st.markdown(
@@ -382,10 +397,11 @@ def render_pulse() -> None:
         with a2:
             st.markdown("**Recently touched files**")
             for row in S.file_activity(limit=8):
+                touched = row["mtime"].strftime("%Y-%m-%d %H:%M:%S")
                 st.markdown(
                     f'<div class="gr-flash"><code>{row["path"]}</code> · '
                     f'{row["size_kb"]} KB<br><span class="gr-note">'
-                    f'{row["mtime"][:%Y-%m-%d %H:%M:%S} UTC</span></div>',
+                    f'{touched} UTC</span></div>',
                     unsafe_allow_html=True,
                 )
 
@@ -433,6 +449,7 @@ def render_pulse() -> None:
                     height=460, margin=dict(l=0, r=0, t=10, b=0),
                     geo=dict(
                         scope="africa", projection_type="mercator",
+                        lataxis_range=[-38, 16], lonaxis_range=[4, 44],
                         showland=True, landcolor="rgba(30,41,59,0.65)",
                         showcountries=True, countrycolor="rgba(100,116,139,0.55)",
                         coastlinecolor="rgba(100,116,139,0.7)",
@@ -441,25 +458,27 @@ def render_pulse() -> None:
                     paper_bgcolor="rgba(0,0,0,0)",
                     font=dict(color="#cbd5e1"),
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
             with m2:
                 st.subheader("Current conditions")
-                show = view[["city", "country", "conditions", "temperature_c",
+                show = view[["city", "conditions", "temperature_c",
                              "humidity_pct", "precip_mm", "wind_kmh", "gust_kmh"]]
                 st.dataframe(
                     show.rename(columns={
-                        "city": "City", "country": "C", "conditions": "Conditions",
+                        "city": "City", "conditions": "Conditions",
                         "temperature_c": "Temp °C", "humidity_pct": "RH %",
                         "precip_mm": "Rain mm", "wind_kmh": "Wind", "gust_kmh": "Gust",
                     }),
-                    hide_index=True, use_container_width=True, height=300,
+                    hide_index=True, width="stretch", height=460,
                     column_config={
-                        "Temp °C": st.column_config.NumberColumn(format="%.1f"),
-                        "RH %": st.column_config.NumberColumn(format="%d"),
-                        "Rain mm": st.column_config.NumberColumn(format="%.2f"),
-                        "Wind": st.column_config.NumberColumn(format="%.0f"),
-                        "Gust": st.column_config.NumberColumn(format="%.0f"),
+                        "City": st.column_config.TextColumn(width="small"),
+                        "Conditions": st.column_config.TextColumn(width="small"),
+                        "Temp °C": st.column_config.NumberColumn(format="%.1f", width="small"),
+                        "RH %": st.column_config.NumberColumn(format="%d", width="small"),
+                        "Rain mm": st.column_config.NumberColumn(format="%.2f", width="small"),
+                        "Wind": st.column_config.NumberColumn(format="%.0f", width="small"),
+                        "Gust": st.column_config.NumberColumn(format="%.0f", width="small"),
                     },
                 )
                 st.caption(
@@ -474,9 +493,9 @@ def render_pulse() -> None:
                 daily = (
                     hist[hist["country"].isin(countries)]
                     .set_index("time")
-                    .groupby("city")[["temperature_2m", "precipitation"]]
+                    .groupby("city")
                     .resample("D")
-                    .mean()
+                    .agg({"temperature_2m": "mean", "precipitation": "sum"})
                     .reset_index()
                 )
                 d1, d2 = st.columns(2)
@@ -489,7 +508,7 @@ def render_pulse() -> None:
                         ))
                     if not view.empty:
                         fig.add_trace(go.Scatter(
-                            x=[pd.Timestamp.utcnow().tz_localize(None)],
+                            x=[pd.Timestamp.now("UTC").tz_localize(None)],
                             y=[view["temperature_c"].mean()],
                             mode="markers", name="live edge",
                             marker=dict(size=13, color="#f97316",
@@ -498,13 +517,13 @@ def render_pulse() -> None:
                             hovertemplate="live edge · %{y:.1f} °C<extra></extra>",
                         ))
                     fig.update_layout(
-                        height=300, margin=dict(l=0, r=0, t=10, b=0),
+                        height=340, margin=dict(l=45, r=10, t=34, b=0),
                         title="Daily mean temperature",
                         yaxis_title="°C", xaxis_title="",
                         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                         font=dict(color="#cbd5e1", size=11), legend=dict(orientation="h"),
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
                 with d2:
                     fig = go.Figure()
                     for city, grp in daily.groupby("city"):
@@ -519,7 +538,7 @@ def render_pulse() -> None:
                         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                         font=dict(color="#cbd5e1", size=11), showlegend=False,
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
 
             if show_raw_detail and not hist.empty:
                 st.subheader("Raw grid sample")
@@ -531,13 +550,119 @@ def render_pulse() -> None:
                 st.dataframe(
                     sample[["city", "time", "temperature_2m", "precipitation",
                              "wind_speed_10m", "weather_code"]],
-                    hide_index=True, use_container_width=True, height=320,
+                    hide_index=True, width="stretch", height=320,
                 )
 
     # =====================================================================
-    # Tab 3 — Boundaries
+    # Tab 3 — Outages (the label signal)
     # =====================================================================
     with tabs[2]:
+        out = S.outage_health()
+        if not out["files"]:
+            st.info(
+                "No outage label data yet. Day 4 is the next acquisition step — "
+                "the dashboard will pick it up as soon as it lands in "
+                "data/raw/outages/."
+            )
+        else:
+            st.subheader("Load-shedding history — the label signal")
+            st.caption(
+                f"{out['files']} raw file(s) · {out['bytes'] / 1e6:.0f} MB · "
+                f"{', '.join(out['sqlite_files'] + out['json_files'])}"
+            )
+
+            eskom = cached_eskom()
+            if not eskom.empty:
+                active = eskom[eskom["mlr_mw"] > 0]
+                episodes = cached_eskom_episodes()
+                span = eskom["time"]
+                kk = st.columns(5)
+                kk[0].metric("Hours with load reduction", f"{len(active):,}")
+                kk[1].metric(
+                    "Share of hours",
+                    f"{len(active) / len(eskom) * 100:.1f}%" if len(eskom) else "—",
+                )
+                kk[2].metric(
+                    "Peak reduction",
+                    f"{eskom['mlr_mw'].max():,.0f} MW" if len(eskom) else "—",
+                )
+                kk[3].metric("Load-shedding events", f"{len(episodes):,}")
+                kk[4].metric(
+                    "Coverage",
+                    f"{span.min():%Y-%m} → {span.max():%Y-%m}",
+                )
+
+                o1, o2 = st.columns([1.5, 1])
+                with o1:
+                    daily = (
+                        eskom.set_index("time")["mlr_mw"]
+                        .resample("D").max().dropna()
+                    )
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=daily.index, y=daily.values, mode="lines",
+                        line=dict(width=0.6, color="#f97316"),
+                        fill="tozeroy",
+                        fillcolor="rgba(249,115,22,0.28)",
+                        hovertemplate="%{x|%b %Y}<br>%{y:,.0f} MW<extra></extra>",
+                        name="daily peak",
+                    ))
+                    fig.update_layout(
+                        height=330, margin=dict(l=0, r=0, t=30, b=0),
+                        title="Daily peak manual load reduction (MW)",
+                        xaxis_title="", yaxis_title="MW",
+                        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                        font=dict(color="#cbd5e1", size=11),
+                    )
+                    st.plotly_chart(fig, width="stretch")
+                with o2:
+                    yearly = (
+                        eskom[eskom["mlr_mw"] > 0].set_index("time")["mlr_mw"]
+                        .resample("YE").agg(["count", "max"])
+                    )
+                    fig = go.Figure()
+                    fig.add_trace(go.Bar(
+                        x=yearly.index.year, y=yearly["count"],
+                        marker_color="#fb923c", name="hours",
+                        hovertemplate="%{x}<br>%{y:,} hours<extra></extra>",
+                    ))
+                    fig.update_layout(
+                        height=330, margin=dict(l=0, r=0, t=30, b=0),
+                        title="Load-shedding hours per year",
+                        xaxis_title="", yaxis_title="hours",
+                        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                        font=dict(color="#cbd5e1", size=11), showlegend=False,
+                    )
+                    st.plotly_chart(fig, width="stretch")
+
+                st.markdown("**Severest events**")
+                if not episodes.empty:
+                    top = episodes.head(12).copy()
+                    top["start"] = top["start"].dt.strftime("%Y-%m-%d %H:%M")
+                    top["end"] = top["end"].dt.strftime("%Y-%m-%d %H:%M")
+                    top["peak_mw"] = top["peak_mw"].round(0)
+                    top["mean_mw"] = top["mean_mw"].round(0)
+                    st.dataframe(
+                        top.rename(columns={
+                            "start": "Start (UTC)", "end": "End (UTC)",
+                            "hours": "Hours", "peak_mw": "Peak MW",
+                            "mean_mw": "Mean MW",
+                        }),
+                        hide_index=True, width="stretch", height=300,
+                    )
+                st.caption(
+                    "Eskom system-operations export. `Manual Load_Reduction` is the "
+                    "load-shedding signal for South Africa — the label the model will "
+                    "predict. Planned and unplanned interruptions must still be "
+                    "separated downstream (Day 10)."
+                )
+            else:
+                st.info("The Eskom export has not been parsed yet.")
+
+    # =====================================================================
+    # Tab 4 — Boundaries
+    # =====================================================================
+    with tabs[3]:
         tolerance = 0.05 if adm_level == "ADM2" else 0.01
         geo = cached_geojson(adm_level, tuple(countries), tolerance)
 
@@ -579,7 +704,7 @@ def render_pulse() -> None:
                              bgcolor="rgba(0,0,0,0)"),
                     paper_bgcolor="rgba(0,0,0,0)",
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         with b2:
             st.subheader("Layer facts")
@@ -592,7 +717,7 @@ def render_pulse() -> None:
                         "country": "ISO", "level": "Lvl", "canonical": "Units type",
                         "units": "N", "year": "Year", "license": "License",
                     }),
-                    hide_index=True, use_container_width=True, height=320,
+                    hide_index=True, width="stretch", height=320,
                 )
                 st.caption(
                     "Licences must be attributed in the README (Day 29). "
@@ -626,15 +751,15 @@ def render_pulse() -> None:
                         }
                         for stem, c in health["cities"].items()
                     ]),
-                    hide_index=True, use_container_width=True, height=240,
+                    hide_index=True, width="stretch", height=240,
                 )
             else:
                 st.info("No weather downloads yet.")
 
     # =====================================================================
-    # Tab 4 — Provenance
+    # Tab 5 — Provenance
     # =====================================================================
-    with tabs[3]:
+    with tabs[4]:
         p1, p2 = st.columns([1.25, 1])
         with p1:
             st.subheader("Acquired files")
@@ -644,7 +769,7 @@ def render_pulse() -> None:
                 view["MB"] = (view["bytes"] / 1e6).round(2)
                 st.dataframe(
                     view[["file", "kind", "MB", "retrieved_utc", "license"]],
-                    hide_index=True, use_container_width=True, height=420,
+                    hide_index=True, width="stretch", height=420,
                 )
                 st.caption(
                     "Raw responses are stored byte-identical to the source and never "
@@ -664,7 +789,7 @@ def render_pulse() -> None:
                         "section": "Section", "id": "ID", "source": "Source",
                         "status": "Status",
                     }),
-                    hide_index=True, use_container_width=True, height=420,
+                    hide_index=True, width="stretch", height=420,
                 )
                 st.caption(
                     "Statuses are the declared ones from reports/data_inventory.md. "

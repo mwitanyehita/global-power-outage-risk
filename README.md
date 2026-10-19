@@ -6,8 +6,9 @@ Africa**, built from verified outage records, weather data, official notices,
 forecasts — not hype: every number published by this project must be traceable
 to a documented data source.
 
-**Status:** Day 2 of a planned 29-day build · 24 tests passing · administrative
-boundaries for all three pilot countries ingested and audited.
+**Status:** Day 3 of a planned 29-day build · test suite green ·
+administrative boundaries and historical weather for all three pilot countries
+ingested and audited.
 
 ---
 
@@ -51,16 +52,21 @@ Weather is sampled for three cities per country (see
 |---|---|---|
 | 1 | Colab + local environment check (`notebooks/00_colab_setup.ipynb`), project data inventory (`reports/data_inventory.md`) | ✅ committed |
 | 2 | Administrative boundaries downloaded from geoBoundaries gbOpen and audited (`notebooks/01_admin_boundaries.ipynb`, `src/ingestion/boundaries.py`, `reports/day02_boundaries_audit.md`) | ✅ committed — 9/9 files pass every check |
-| 3 | Historical weather for pilot cities (`src/ingestion/weather.py`) | 🔄 in progress |
+| 3 | Historical weather for the nine pilot cities (`notebooks/02_historical_weather.ipynb`, `src/ingestion/weather.py`, `reports/day03_weather_audit.md`) | ✅ committed — all 9 cities pass timestamp/alignment checks |
 
-- **Tests:** `.venv/bin/python -m pytest -q` → 24 passing (Day 2).
+- **Tests:** `.venv/bin/python -m pytest -q` — suite is green on every commit
+  (34 tests after Day 3; run locally for the current count as later days add
+  coverage). CI runs the same command on every push.
 - **Audit highlights:** all 9 boundary files are EPSG:4326 with zero
   null/empty/invalid geometries and unit counts matching both API metadata and
   expectations; one known issue — 5 duplicate unit names in `NGA_ADM2.geojson`,
   resolved on Day 11 by point-in-polygon matching instead of name matching.
-- **Not built yet:** features, models, outage labels, evaluation, or the
-  Streamlit dashboard. The `src/features/`, `src/models/`,
-  `src/evaluation/`, and `app/` directories are placeholders by design.
+  Weather: 50 808 hourly rows per city (2021-01-01 → 2026-10-18 UTC), zero
+  gaps, zero duplicates, identical UTC grid across all nine cities.
+- **Not built yet:** features, outage labels, models, or evaluation
+  (`src/features/`, `src/models/`, `src/evaluation/` are placeholders by
+  design). Day 4+ work — outage records, feature build, dashboard — is in
+  flight; see [`docs/project_plan.md`](docs/project_plan.md).
 
 ## Repository layout
 
@@ -71,7 +77,7 @@ Weather is sampled for three cities per country (see
 ├── requirements-dev.txt       ← + test/notebook tooling
 ├── pytest.ini                 ← pytest configuration
 ├── .github/workflows/tests.yml← CI: install + pytest on every push/PR
-├── app/                       ← Streamlit dashboard (Day 22, not started)
+├── app/                       ← Streamlit dashboard (app/dashboard.py)
 ├── data/
 │   ├── raw/                   ← verbatim downloads, never edited (git-ignored)
 │   ├── external/              ← reference data: boundaries, lookups (git-ignored)
@@ -81,11 +87,12 @@ Weather is sampled for three cities per country (see
 ├── reports/                   ← data inventory, daily audit reports
 ├── src/
 │   ├── config.py              ← single source of truth for paths/runtime
-│   ├── ingestion/             ← boundaries.py (Day 2), weather.py (Day 3, in progress)
+│   ├── ingestion/             ← boundaries.py (Day 2), weather.py (Day 3)
+│   ├── dashboard/             ← dashboard state/helpers (app/ frontend)
 │   ├── features/              ← (planned)
 │   ├── models/                ← (planned)
 │   └── evaluation/            ← (planned)
-└── tests/                     ← 24 tests, run on every push (CI)
+└── tests/                     ← run on every push (CI)
 ```
 
 Raw and reference data under `data/` are **git-ignored** (licensing and size);
@@ -117,7 +124,7 @@ virtual environment (Python 3.14.4, verified 2026-10-19 via `pip freeze`).
 ## Running the tests
 
 ```bash
-python -m pytest -q          # 24 passing as of Day 2
+python -m pytest -q          # suite green on every commit
 ```
 
 Geometry tests skip automatically on a fresh clone where `data/external/`
@@ -136,7 +143,7 @@ python -m src.ingestion.boundaries
 python -m src.ingestion.boundaries --adm ADM1        # one level only
 python -m src.ingestion.boundaries --audit           # re-inspect existing files
 
-# Day 3 — historical weather for the nine pilot cities (in progress)
+# Day 3 — historical weather for the nine pilot cities
 python -m src.ingestion.weather
 python -m src.ingestion.weather --audit
 ```
@@ -171,7 +178,7 @@ roadmap is in [`docs/project_plan.md`](docs/project_plan.md). In short:
 
 | Phase | Days | Focus |
 |---|---|---|
-| Foundations | 1–2 ✅ | Environment check, data inventory, administrative boundaries + audit |
+| Foundations | 1–3 ✅ | Environment check, data inventory, administrative boundaries + audit, historical weather + audit |
 | Data acquisition | 3–7 | Historical weather, outage records/notices, World Bank indicators, source register (`reports/source_register.csv`), data audit with go/no-go per source |
 | Normalization | 8–11 | Timezone-aware UTC normalization, lookup tables, planned/unplanned label separation, point-in-polygon mapping of outages to boundaries |
 | Features & leakage control | 16–18 | Context/exposure layers, feature build, forecast issue-time leakage rule enforced |
@@ -205,7 +212,7 @@ sets carry the licenses below exactly as reported by the geoBoundaries API.
 > **Attribution notice:** Contains information from geoBoundaries
 > (https://www.geoboundaries.org), © William & Mary, licensed CC BY 4.0.
 
-### Weather (Day 3 ingestion in progress)
+### Weather (acquired, Day 3)
 
 | Dataset | License / terms | Attribution string |
 |---|---|---|

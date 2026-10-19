@@ -11,3 +11,15 @@ data/external/*
 !data/external/.gitkeep
 reports/*.csv
 reports/*.parquet
+
+# Test / tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
