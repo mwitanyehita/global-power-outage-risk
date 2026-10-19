@@ -10,6 +10,7 @@ data/external/*
 !data/processed/.gitkeep
 !data/external/.gitkeep
 reports/*.csv
+!reports/source_register.csv
 reports/*.parquet
 
 # Test / tooling caches
