@@ -6,11 +6,21 @@ and administrative geography. The goal is honest, well-calibrated risk
 forecasts — not hype: every number published by this project must be traceable
 to a documented data source.
 
-**Status:** Day 30 of 30 committed · boundaries, weather, outage records and
-labels acquired for all three pilots; a walk-forward probabilistic model built
-and **ablated** for South Africa, an honest **no-model** result for Nigeria, a
-coverage atlas, a live dashboard, and a final summary with portfolio-safe
-wording.
+**Status:** Build complete (2026-10-19) · all 25 specified deliverables in the
+30-day plan are committed; Days 23–26 and 28 were left unspecified by the
+source plan and remain TBD. Boundaries, weather, outage records and labels are
+acquired for all three pilots; a walk-forward probabilistic model was built
+and **ablated** for South Africa, an honest **no-model** result is recorded for
+Nigeria, and a coverage atlas, live dashboard and final summary complete the
+portfolio layer.
+
+> **Headline result:** South African national day-ahead load-shedding is
+> predictable from persistence. Walk-forward Brier **0.0457** vs **0.2338** for
+> the pinned climatology baseline (skill **+0.794**, ROC-AUC **0.981**, 1,350
+> out-of-fold days). Weather adds no material skill beyond label lags, and no
+> Kenya or Nigeria model is claimed. Read the
+> [model status](#current-status) and
+> [final summary](reports/day30_final_summary.md) before quoting any number.
 
 ---
 
@@ -23,6 +33,7 @@ wording.
 - [Setup](#setup)
 - [Running the tests](#running-the-tests)
 - [Running the ingestion CLIs](#running-the-ingestion-clis)
+- [Live dashboard](#live-dashboard)
 - [Notebooks](#notebooks)
 - [Project principles](#project-principles)
 - [30-day plan summary](#30-day-plan-summary)
@@ -80,10 +91,11 @@ Weather is sampled for three cities per country (see
 | 29 | Attribution strings in the README for every used source, guarded by `tests/test_readme_attribution.py` | ✅ strings landed early and are test-enforced; the supported-claims review is part of Day 30 |
 | 30 | Final summary, limitations and reproducibility checklist (`reports/day30_final_summary.md`, `reports/README.md` report index) | ✅ committed |
 
-- **Tests:** `.venv/bin/python -m pytest -q` — **566 passing** at the Day 30
-  commit. CI (`.github/workflows/tests.yml`) runs the same command on every
-  push and pull request. `bash scripts/verify.sh` runs the suite **and**
-  regenerates every derived artifact and report.
+- **Tests:** `.venv/bin/python -m pytest -q` — **566 passing** on the completed
+  build (verified 2026-10-19). CI (`.github/workflows/tests.yml`) runs the same
+  command on every push and pull request. `bash scripts/verify.sh` runs the
+  suite **and** regenerates the core derived artefacts and generated reports in
+  pipeline order.
 - **Audit highlights:** all 9 boundary files are EPSG:4326 with zero
   null/empty/invalid geometries and unit counts matching both API metadata and
   expectations; one known issue — 5 duplicate unit names in `NGA_ADM2.geojson`
@@ -133,6 +145,7 @@ Weather is sampled for three cities per country (see
 ├── docs/                      ← project plan & data governance notes
 ├── notebooks/                 ← Colab-compatible walkthroughs (Day 1, 2, 3)
 ├── reports/                   ← data inventory + one audit/analysis report per day
+├── scripts/verify.sh          ← full suite + regenerate core derived artefacts
 ├── src/
 │   ├── config.py              ← single source of truth for paths/runtime
 │   ├── ingestion/             ← boundaries, weather, outages, KPLC, NERC, World Bank
@@ -146,7 +159,7 @@ Weather is sampled for three cities per country (see
 │   ├── evaluation/            ← probabilistic metrics (Brier, log loss, skill, ECE)
 │   ├── experiments/           ← end-to-end model runs (ZAF day-ahead)
 │   └── dashboard/             ← dashboard state/helpers (app/ frontend)
-└── tests/                     ← run on every push (CI)
+└── tests/                     ← hermetic suite + README attribution guards (CI)
 ```
 
 Raw and reference data under `data/` are **git-ignored** (licensing and size);
@@ -161,7 +174,7 @@ against; other 3.14.x-compatible versions may work but are not the tested
 baseline).
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/mwitanyehita/global-power-outage-risk.git
 cd global-power-outage-risk
 
 python3.14 -m venv .venv
@@ -283,8 +296,9 @@ roadmap is in [`docs/project_plan.md`](docs/project_plan.md). In short:
 The report index with a one-line purpose and a reproduce command for every
 day lives in [`reports/README.md`](reports/README.md).
 
-Days not yet specified are marked as TBD in `docs/project_plan.md` and will be
-firmed up as the build progresses; nothing there is invented.
+Days not specified by the source plan are marked TBD in
+[`docs/project_plan.md`](docs/project_plan.md) and remain TBD — the build never
+invented scope to fill them.
 
 ## Data sources & licenses
 
