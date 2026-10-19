@@ -39,8 +39,11 @@ bash scripts/verify.sh
 | `day16_zaf_dataset.md` | Is the day-ahead feature matrix leakage-clean? | `python -m src.datasets.zaf_daily` |
 | `day17_nga_labels.md` | Which NGA days are labelable (and which never)? | `python -m src.labels.collapse_days` |
 | `day18_zaf_model.md` | Does the day-ahead model beat pinned climatology? | `python -m src.experiments.zaf_daily_model` |
+| `day19_calibration.md` | When may a probability be published? | — (protocol record) |
 | `day20_nga_baseline.md` | Why **no** NGA model is claimed | `python -m src.experiments.nga_baseline` |
 | `day21_zaf_ablation.md` | What actually predicts shedding (persistence vs weather)? | `python -m src.experiments.zaf_ablation` |
+| `day27_model_interpretation.md` | What drives the model + portfolio-safe wording | `python -m src.experiments.zaf_interpretation` |
+| `day30_final_summary.md` | What the project delivers and refuses to claim | — (final summary) |
 
 ## Headline results (walk-forward, honestly evaluated)
 
